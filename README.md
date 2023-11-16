@@ -1,1 +1,1 @@
-# SRDS
+# SRDS - Cassandra DB project
