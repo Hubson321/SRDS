@@ -1,0 +1,46 @@
+version: "3.9"
+
+services:
+  cassandra1:
+    image: cassandra:latest
+    container_name: cassandra1
+    ports:
+      - "9041:9042"
+    volumes:
+      - ~/apps/cassandra1:/var/lib/cassandra
+    environment:
+      - CASSANDRA_CLUSTER_NAME=srds
+      - CASSANDRA_SEEDS=cassandra1,cassandra2,cassandra3
+    networks:
+      - cassandra-cluster-network
+
+  cassandra2:
+    image: cassandra:latest
+    container_name: cassandra2
+    ports:
+      - "9042:9042"
+    volumes:
+      - ~/apps/cassandra2:/var/lib/cassandra
+    environment:
+      - CASSANDRA_CLUSTER_NAME=srds
+      - CASSANDRA_SEEDS=cassandra1,cassandra2,cassandra3
+    networks:
+      - cassandra-cluster-network
+
+  cassandra3:
+    image: cassandra:latest
+    container_name: cassandra3
+    ports:
+      - "9043:9042"
+    volumes:
+      - ~/apps/cassandra3:/var/lib/cassandra
+    environment:
+      - CASSANDRA_CLUSTER_NAME=srds
+      - CASSANDRA_SEEDS=cassandra1,cassandra2,cassandra3
+    networks:
+      - cassandra-cluster-network
+
+networks:
+  cassandra-cluster-network:
+    external: false
+    name: cassandra-cluster-network
