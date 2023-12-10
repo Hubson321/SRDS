@@ -4,11 +4,16 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="9ccb3aa8-1a78-44d7-be71-96cc0f39051c" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/CassandraDemo.iml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CassandraDemo.ipr" beforeDir="false" afterPath="$PROJECT_DIR$/CassandraDemo.ipr" afterDir="false" />
+    <list default="true" id="9ccb3aa8-1a78-44d7-be71-96cc0f39051c" name="Changes" comment="Add additional Dockerfile to handle moving scripts">
+      <change afterPath="$PROJECT_DIR$/docker/cassandra1/Dockerfile" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/docker/cassandra2/Dockerfile" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/docker/cassandra3/Dockerfile" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/docker/scripts/create_schema.cql" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/docker/scripts/drop_schema.cql" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/docker/scripts/load_data.cql" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/CassandraDemo.iws" beforeDir="false" afterPath="$PROJECT_DIR$/CassandraDemo.iws" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/config.properties" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/config.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docker/docker-compose.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/docker/docker-compose.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/schema/create_schema.cql" beforeDir="false" afterPath="$PROJECT_DIR$/schema/create_schema.cql" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -111,7 +116,7 @@
     "WebServerToolWindowFactoryState": "false",
     "git-widget-placeholder": "dev",
     "ignore.virus.scanning.warn.message": "true",
-    "last_opened_file_path": "D:/Hubert/SRDS/docker/docker-compose.yaml",
+    "last_opened_file_path": "D:/Hubert/SRDS/docker/scripts",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -126,7 +131,16 @@
 }]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\Hubert\SRDS\docker\scripts" />
+      <recent name="D:\Hubert\SRDS\docker\cassandra3" />
+      <recent name="D:\Hubert\SRDS\docker\cassandra2" />
+      <recent name="D:\Hubert\SRDS\docker\cassandra1" />
       <recent name="D:\Hubert\SRDS\docker" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\Hubert\SRDS\docker" />
+      <recent name="D:\Hubert\SRDS\docker\cassandra1\scripts" />
+      <recent name="D:\Hubert\SRDS\docker\cassandra1" />
     </key>
   </component>
   <component name="RunAnythingCache">
@@ -134,7 +148,7 @@
       <command value="gradle --build-cache" />
     </option>
   </component>
-  <component name="RunManager" selected="Docker.Set up Cassandra">
+  <component name="RunManager" selected="Application.Run program">
     <configuration default="true" type="Applet" factoryName="Applet">
       <module name="" />
       <option name="MAIN_CLASS_NAME" />
@@ -274,8 +288,18 @@
       <workItem from="1700132173544" duration="3152000" />
       <workItem from="1700135414467" duration="1271000" />
       <workItem from="1700999210222" duration="3944000" />
-      <workItem from="1702206991181" duration="223000" />
+      <workItem from="1702206991181" duration="809000" />
+      <workItem from="1702218859343" duration="2955000" />
     </task>
+    <task id="LOCAL-00001" summary="Add docker-compose and project files">
+      <option name="closed" value="true" />
+      <created>1702207502489</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1702207502490</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -285,7 +309,22 @@
     <option featureType="dependencySupport" implementationName="executable:docker" />
     <option featureType="dependencySupport" implementationName="executable:kubectl" />
   </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
   <component name="VcsManagerConfiguration">
+    <MESSAGE value="Add initial code example" />
+    <MESSAGE value="Add docker-compose and project files" />
+    <MESSAGE value="Add additional Dockerfile to handle moving scripts" />
+    <option name="LAST_COMMIT_MESSAGE" value="Add additional Dockerfile to handle moving scripts" />
     <option name="MAKE_NEW_CHANGELIST_ACTIVE" value="true" />
   </component>
   <component name="XDebuggerManager">
@@ -293,13 +332,13 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/main/java/cassdemo/Main.java</url>
-          <line>26</line>
-          <option name="timeStamp" value="2" />
+          <line>33</line>
+          <option name="timeStamp" value="5" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/main/java/cassdemo/backend/BackendSession.java</url>
-          <line>31</line>
-          <option name="timeStamp" value="3" />
+          <line>62</line>
+          <option name="timeStamp" value="6" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
