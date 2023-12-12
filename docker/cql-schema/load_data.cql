@@ -1,4 +1,4 @@
-USE srds;
+USE Test;
 
 INSERT INTO Users (companyName, name, phone, street) VALUES ('PP', 'Adam', 720, 'A St');
 INSERT INTO Users (companyName, name, phone, street) VALUES ('PP', 'Ewa', 720, 'B St');
