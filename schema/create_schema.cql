@@ -3,7 +3,7 @@ CREATE KEYSPACE IF NOT EXISTS srds
 
 USE srds;
 
-CREATE TABLE IF NOT EXISTS Uprawnieni
+CREATE TABLE IF NOT EXISTS UprawnieniObywatele
 (
     okreg       int,
     idObywatela uuid,

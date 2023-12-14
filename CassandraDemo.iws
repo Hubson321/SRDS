@@ -5,8 +5,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="9ccb3aa8-1a78-44d7-be71-96cc0f39051c" name="Changes" comment="Add additional Dockerfile to handle moving scripts">
+      <change afterPath="$PROJECT_DIR$/src/main/java/cassdemo/ObjectsModel/Candidate.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/cassdemo/VoteObjects/SetupScript.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resource/candidates.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/CassandraDemo.ipr" beforeDir="false" afterPath="$PROJECT_DIR$/CassandraDemo.ipr" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/CassandraDemo.iws" beforeDir="false" afterPath="$PROJECT_DIR$/CassandraDemo.iws" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/schema/create_schema.cql" beforeDir="false" afterPath="$PROJECT_DIR$/schema/create_schema.cql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cassdemo/backend/BackendSession.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cassdemo/backend/BackendSession.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -98,6 +103,14 @@
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="project.structure.last.edited" value="SDKs" />
+    <property name="project.structure.proportion" value="0.15" />
+    <property name="project.structure.side.proportion" value="0.2" />
+    <property name="settings.editor.selected.configurable" value="preferences.keymap" />
+    <property name="vue.rearranger.settings.migration" value="true" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
@@ -259,6 +272,7 @@
       <workItem from="1700999210222" duration="3944000" />
       <workItem from="1702206991181" duration="809000" />
       <workItem from="1702218859343" duration="2955000" />
+      <workItem from="1702546018434" duration="2756000" />
     </task>
     <task id="LOCAL-00001" summary="Add docker-compose and project files">
       <option name="closed" value="true" />
@@ -295,22 +309,6 @@
     <MESSAGE value="Add additional Dockerfile to handle moving scripts" />
     <option name="LAST_COMMIT_MESSAGE" value="Add additional Dockerfile to handle moving scripts" />
     <option name="MAKE_NEW_CHANGELIST_ACTIVE" value="true" />
-  </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/main/java/cassdemo/Main.java</url>
-          <line>33</line>
-          <option name="timeStamp" value="5" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/main/java/cassdemo/backend/BackendSession.java</url>
-          <line>62</line>
-          <option name="timeStamp" value="6" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

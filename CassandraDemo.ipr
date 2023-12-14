@@ -75,7 +75,7 @@
       <module fileurl="file://$PROJECT_DIR$/SRDS.test.iml" filepath="$PROJECT_DIR$/SRDS.test.iml" />
     </modules>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_17" default="true" project-jdk-name="17" project-jdk-type="JavaSDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_8" default="true" project-jdk-name="1.8" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/out" />
   </component>
   <component name="RemoteRepositoriesConfiguration">
@@ -109,6 +109,10 @@
       <option name="name" value="MavenLocal" />
       <option name="url" value="file:/$MAVEN_REPOSITORY$" />
     </remote-repository>
+  </component>
+  <component name="SqlDialectMappings">
+    <file url="file://$PROJECT_DIR$/schema/create_schema.cql" dialect="CassandraQL" />
+    <file url="file://$PROJECT_DIR$/schema/drop_schema.cql" dialect="CassandraQL" />
   </component>
   <component name="SvnBranchConfigurationManager">
     <option name="mySupportsUserInfoFilter" value="true" />
