@@ -5,13 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="9ccb3aa8-1a78-44d7-be71-96cc0f39051c" name="Changes" comment="Add additional Dockerfile to handle moving scripts">
-      <change afterPath="$PROJECT_DIR$/src/main/java/cassdemo/ObjectsModel/Candidate.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/cassdemo/VoteObjects/SetupScript.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/resource/candidates.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/cassdemo/backend/SetupSession.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/CassandraDemo.ipr" beforeDir="false" afterPath="$PROJECT_DIR$/CassandraDemo.ipr" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/CassandraDemo.iws" beforeDir="false" afterPath="$PROJECT_DIR$/CassandraDemo.iws" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/schema/create_schema.cql" beforeDir="false" afterPath="$PROJECT_DIR$/schema/create_schema.cql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/cassdemo/backend/BackendSession.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cassdemo/backend/BackendSession.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -106,7 +102,8 @@
   </component>
   <component name="PropertiesComponent">
     <property name="WebServerToolWindowFactoryState" value="false" />
-    <property name="project.structure.last.edited" value="SDKs" />
+    <property name="nodejs_package_manager_path" value="npm" />
+    <property name="project.structure.last.edited" value="Project" />
     <property name="project.structure.proportion" value="0.15" />
     <property name="project.structure.side.proportion" value="0.2" />
     <property name="settings.editor.selected.configurable" value="preferences.keymap" />
@@ -153,7 +150,7 @@
       <Port>5050</Port>
     </configuration>
     <configuration name="Run program" type="Application" factoryName="Application" temporary="true">
-      <option name="ALTERNATIVE_JRE_PATH" value="17" />
+      <option name="ALTERNATIVE_JRE_PATH" value="corretto-16" />
       <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
       <option name="MAIN_CLASS_NAME" value="cassdemo.Main" />
       <module name="SRDS.main" />
@@ -162,6 +159,16 @@
           <option name="PATTERN" value="cassdemo.*" />
           <option name="ENABLED" value="true" />
         </pattern>
+      </extension>
+      <extension name="net.ashald.envfile">
+        <option name="IS_ENABLED" value="false" />
+        <option name="IS_SUBST" value="false" />
+        <option name="IS_PATH_MACRO_SUPPORTED" value="false" />
+        <option name="IS_IGNORE_MISSING_FILES" value="false" />
+        <option name="IS_ENABLE_EXPERIMENTAL_INTEGRATIONS" value="false" />
+        <ENTRIES>
+          <ENTRY IS_ENABLED="true" PARSER="runconfig" IS_EXECUTABLE="false" />
+        </ENTRIES>
       </extension>
       <method v="2">
         <option name="BuildArtifacts" enabled="false" />
@@ -272,7 +279,7 @@
       <workItem from="1700999210222" duration="3944000" />
       <workItem from="1702206991181" duration="809000" />
       <workItem from="1702218859343" duration="2955000" />
-      <workItem from="1702546018434" duration="2756000" />
+      <workItem from="1702546018434" duration="3655000" />
     </task>
     <task id="LOCAL-00001" summary="Add docker-compose and project files">
       <option name="closed" value="true" />

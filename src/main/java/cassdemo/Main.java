@@ -5,6 +5,7 @@ import java.util.Properties;
 
 import cassdemo.backend.BackendException;
 import cassdemo.backend.BackendSession;
+import cassdemo.backend.SetupSession;
 
 public class Main {
 
@@ -23,7 +24,14 @@ public class Main {
 		} catch (IOException ex) {
 			ex.printStackTrace();
 		}
-			
+
+
+		SetupSession setupSession = new SetupSession(contactPoint, keyspace);
+		// przed prawidłowym skryptem na początku uruchomić tylko meotdy z setupSession,
+		// potem zakomentowac
+		setupSession.prepareStatements();
+		setupSession.setupCandidatesAndCitizens();
+
 		BackendSession session = new BackendSession(contactPoint, keyspace);
 
 		session.upsertUser("PP", "Adam", 609, "A St");
