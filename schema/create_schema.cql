@@ -3,18 +3,13 @@ CREATE KEYSPACE IF NOT EXISTS srds
 
 USE srds;
 
-CREATE TABLE IF NOT EXISTS WyborySenat
+CREATE TABLE IF NOT EXISTS Uprawnieni
 (
     okreg       int,
-    idKandydata uuid,
-    PRIMARY KEY (okreg)
-);
-
-CREATE TABLE IF NOT EXISTS WyborySejm
-(
-    okreg       int,
-    idKandydata uuid,
-    PRIMARY KEY (okreg)
+    idObywatela uuid,
+    glosDoSenatu boolean,
+    glosDoSejmu boolean,
+    PRIMARY KEY (okreg, idObywatela, glosDoSenatu, glosDoSejmu)
 );
 
 CREATE TABLE IF NOT EXISTS Okregi

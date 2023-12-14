@@ -5,15 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="9ccb3aa8-1a78-44d7-be71-96cc0f39051c" name="Changes" comment="Add additional Dockerfile to handle moving scripts">
-      <change afterPath="$PROJECT_DIR$/docker/cassandra1/Dockerfile" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/docker/cassandra2/Dockerfile" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/docker/cassandra3/Dockerfile" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/docker/scripts/create_schema.cql" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/docker/scripts/drop_schema.cql" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/docker/scripts/load_data.cql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CassandraDemo.ipr" beforeDir="false" afterPath="$PROJECT_DIR$/CassandraDemo.ipr" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/CassandraDemo.iws" beforeDir="false" afterPath="$PROJECT_DIR$/CassandraDemo.iws" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docker/docker-compose.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/docker/docker-compose.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/schema/create_schema.cql" beforeDir="false" afterPath="$PROJECT_DIR$/schema/create_schema.cql" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -93,9 +86,6 @@
   <component name="ProblemsViewState">
     <option name="selectedTabId" value="ProjectErrors" />
   </component>
-  <component name="ProjectColorInfo">{
-  &quot;associatedIndex&quot;: 5
-}</component>
   <component name="ProjectId" id="2YFrSs2FCaLUJGFrnPktvOqqdfQ" />
   <component name="ProjectInspectionProfilesVisibleTreeState">
     <entry key="Project Default">
@@ -109,26 +99,6 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "WebServerToolWindowFactoryState": "false",
-    "git-widget-placeholder": "dev",
-    "ignore.virus.scanning.warn.message": "true",
-    "last_opened_file_path": "D:/Hubert/SRDS/docker/scripts",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "project.structure.last.edited": "SDKs",
-    "project.structure.proportion": "0.15",
-    "project.structure.side.proportion": "0.5886333",
-    "settings.editor.selected.configurable": "reference.settingsdialog.project.gradle",
-    "vue.rearranger.settings.migration": "true"
-  }
-}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="D:\Hubert\SRDS\docker\scripts" />
@@ -209,7 +179,6 @@
       <ExternalSystemDebugServerProcess>true</ExternalSystemDebugServerProcess>
       <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
       <DebugAllEnabled>false</DebugAllEnabled>
-      <RunAsTest>false</RunAsTest>
       <method v="2" />
     </configuration>
     <configuration default="true" type="JUnit" factoryName="JUnit">
