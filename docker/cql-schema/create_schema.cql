@@ -1,7 +1,7 @@
-CREATE KEYSPACE IF NOT EXISTS Test
+CREATE KEYSPACE IF NOT EXISTS srds
   WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 3 };
 
-USE Test;
+USE srds;
 
 CREATE TABLE Users (
   companyName varchar,
