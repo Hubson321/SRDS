@@ -3,36 +3,46 @@ CREATE KEYSPACE IF NOT EXISTS srds
 
 USE srds;
 
-CREATE TABLE Users (
-  companyName varchar,
-  name varchar,
-  phone int,
-  street varchar,
-  pets list<varchar>,
-  PRIMARY KEY (companyName, name)
-);
+CREATE TABLE IF NOT EXISTS UprawnieniObywatele
+(
+    okreg       int,
+    idObywatela uuid,
+    glosDoSenatu boolean,
+    glosDoSejmu boolean,
+    PRIMARY KEY (okreg, idObywatela, glosDoSenatu, glosDoSejmu)
+    );
 
-CREATE INDEX streetIndex ON Users (street);
 
-CREATE TABLE MeteoData (
-  stationName varchar, 
-  measurement timestamp, 
-  temperature double,
-  pressure double,
-  PRIMARY KEY (stationName, measurement)
-);
+CREATE TABLE IF NOT EXISTS Okregi
+(
+    okreg       int,
+    idKandydata uuid,
+    imie varchar,
+    nazwisko varchar,
+    PRIMARY KEY (okreg, idKandydata, imie, nazwisko)
+    );
 
-CREATE TABLE MeteoData2 (
-  stationName varchar, 
-  mDay varchar,
-  measurement timestamp, 
-  temperature double,
-  pressure double,
-  PRIMARY KEY ((stationName, mDay), measurement)
-);
+CREATE TABLE IF NOT EXISTS Frequency
+(
+    voteTimeStamp timestamp,
+    frequency int,
+    PRIMARY KEY (voteTimeStamp, frequency)
+    );
 
-CREATE TABLE PageViewCounts (
-  url varchar,
-  views counter,
-  PRIMARY KEY(url)
-);
+CREATE TABLE IF NOT EXISTS SenatWyniki
+(
+    idKandydata uuid,
+    imie varchar,
+    nazwisko varchar,
+    votes counter,
+    PRIMARY KEY ( idKandydata, imie, nazwisko )
+    );
+
+CREATE TABLE IF NOT EXISTS SejmWyniki
+(
+    idKandydata uuid,
+    imie varchar,
+    nazwisko varchar,
+    votes counter,
+    PRIMARY KEY ( idKandydata, imie, nazwisko )
+    );
