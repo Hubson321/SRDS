@@ -36,7 +36,7 @@ public class SetupSession {
     }
 
     public void setupCandidatesAndCitizens() {
-        this.prepareCitizenSetup();
+//        this.prepareCitizenSetup();
         this.prepareCandidateSetup();
     }
 
@@ -46,7 +46,7 @@ public class SetupSession {
                     "INSERT INTO UprawnieniObywatele (okreg, idObywatela, glosDoSenatu, glosDoSejmu) VALUES (?,?,?,?);"
             );
             INSERT_CANDIDATE = session.prepare(
-                    "INSERT INTO Okregi(okreg, idKandydata,imie, nazwisko) VALUES (?,?,?,?);"
+                    "INSERT INTO Okregi(okreg, idKandydata, imie, nazwisko) VALUES (?,?,?,?);"
             );
         } catch (Exception e) {
             throw new BackendException("Could not prepare statements. " + e.getMessage() + ".", e);
@@ -57,11 +57,14 @@ public class SetupSession {
 
     private void prepareCitizenSetup(){
         Integer areaNum = 1;
-        for (int i = 0; i <= 28000000; i++) {
+        //  Integer ALL_USERS = 28000000;
+        Integer ALL_USERS = 1000000;
+        // for tests: 1000000 / 40
+        for (int i = 1; i <= ALL_USERS; i++) {
             UUID userId = UUID.randomUUID();
             // jeden z 41 okregów wyborczych
-            // 28 mln / 41 ~ 682927 - tylu obywateli per okręg
-            if( i % 682927 == 0){
+            // 28 mln / 41 ~ 682927 - tylu obywateli per okręg, tymczasowo mln glosujących
+            if( i % 25000 == 0){
                 areaNum += 1;
             }
 
@@ -83,7 +86,7 @@ public class SetupSession {
             Integer counter = 0;
             for (Candidate candidate : candidateList) {
                 // umieszczanie kolejnych kandydatów w następnym okręgu wyborczym. Kazdy okręg po 28 kandydatów
-                if(counter % 27 == 0){
+                if(counter % 25 == 0){
                     areaNum += 1;
                 }
                 String name = candidate.getName();
