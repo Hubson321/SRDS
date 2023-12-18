@@ -14,6 +14,16 @@ allprojects {
   targetCompatibility = 1.17
 }
 
+jar {
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    manifest {
+        attributes 'Main-Class' : 'cassdemo.Main'
+    }
+    duplicatesStrategy = 'exclude'
+    destinationDirectory.set(file("$buildDir/project-build"))
+}
 
 repositories {
 	maven { url "https://repo.springsource.org/libs-milestone" }

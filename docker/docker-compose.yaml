@@ -7,8 +7,8 @@ services:
     ports:
       - "9041:9042"
     volumes:
-      - ~/docker_containers/cassandra_proj/cassandra1:/var/lib/cassandra
-      - ./cql-schema/:/cql-schema/
+      - ~/Docker-Volumes/cassandra_proj/cassandra1:/var/lib/cassandra
+      - ./cql-schema/:/cql-schema/:ro
       - ./startup-script.sh:/docker-entrypoint-initdb.d/startup-script.sh
     environment:
       - CASSANDRA_CLUSTER_NAME=srds
@@ -20,39 +20,61 @@ services:
       - |
         docker-entrypoint.sh &
         ./docker-entrypoint-initdb.d/startup-script.sh
-
     networks:
-      - cassandra-cluster-network
+      cassandra-cluster-network:
+        ipv4_address: 172.18.0.1
 
   cassandra2:
     image: cassandra:latest
+    depends_on:
+      - cassandra1
     container_name: cassandra2
     ports:
       - "9042:9042"
     volumes:
-      - ~/docker_containers/cassandra_proj/cassandra2:/var/lib/cassandra
+      - ~/Docker-Volumes/cassandra_proj/cassandra2:/var/lib/cassandra
     environment:
       - CASSANDRA_CLUSTER_NAME=srds
       - CASSANDRA_KEYSPACE=srds
       - CASSANDRA_SEEDS=cassandra1,cassandra2,cassandra3
     networks:
-      - cassandra-cluster-network
+      cassandra-cluster-network:
+        ipv4_address: 172.18.0.2
 
   cassandra3:
     image: cassandra:latest
+    depends_on:
+      - cassandra2
     container_name: cassandra3
     ports:
       - "9043:9042"
     volumes:
-      - ~/docker_containers/cassandra_proj/cassandra3:/var/lib/cassandra
+      - ~/Docker-Volumes/cassandra_proj/cassandra3:/var/lib/cassandra
     environment:
       - CASSANDRA_CLUSTER_NAME=srds
       - CASSANDRA_KEYSPACE=srds
       - CASSANDRA_SEEDS=cassandra1,cassandra2,cassandra3
     networks:
-      - cassandra-cluster-network
+      cassandra-cluster-network:
+        ipv4_address: 172.18.0.3
+  
+  main-java:
+    container_name: main-java
+    depends_on:
+      - cassandra3
+    build: .
+    volumes:
+      - ./cql-schema/:/cql-schema/:ro
+      - ../build/project-build/:/build/:ro
+    networks:
+      cassandra-cluster-network:
+        ipv4_address: 172.18.0.100
 
 networks:
   cassandra-cluster-network:
     external: false
     name: cassandra-cluster-network
+    ipam:
+      config:
+        - subnet: 172.18.0.0/16
+          gateway: 172.18.0.254

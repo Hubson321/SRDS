@@ -1,5 +1,5 @@
-CREATE KEYSPACE IF NOT EXISTS srds1
-            WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 3 };
+CREATE KEYSPACE IF NOT EXISTS srds
+  WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 3 };
 
 USE srds;
 
