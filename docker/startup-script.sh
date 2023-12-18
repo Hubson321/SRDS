@@ -8,7 +8,7 @@ done
 
 # Import data
 cqlsh -f /cql-schema/create_schema.cql
-cqlsh -f /cql-schema/load_data.cql
+# cqlsh -f /cql-schema/load_data.cql
 
 # Sleep infinity - container is alive
 sleep infinity

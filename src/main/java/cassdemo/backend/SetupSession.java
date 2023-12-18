@@ -3,24 +3,25 @@ package cassdemo.backend;
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.PreparedStatement;
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
 import java.util.UUID;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.List;
 
 import cassdemo.ObjectsModel.Candidate;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.type.TypeReference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SetupSession {
 
     private static final Logger logger = LoggerFactory.getLogger(BackendSession.class);
-    private static PrepareStatement INSERT_CITIZEN;
-    private static PrepareStatement INSERT_CANDIDATE;
+    private static PreparedStatement INSERT_CITIZEN;
+    private static PreparedStatement INSERT_CANDIDATE;
     private Session session;
 
     public SetupSession(String contactPoint, String keyspace) throws BackendException {
@@ -34,12 +35,12 @@ public class SetupSession {
         prepareStatements();
     }
 
-    private void setupCandidatesAndCitizens() throws BackendException {
+    public void setupCandidatesAndCitizens() {
         this.prepareCitizenSetup();
         this.prepareCandidateSetup();
     }
 
-    private void prepareStatements() throws BackendException {
+    public void prepareStatements() throws BackendException {
         try {
             INSERT_CITIZEN = session.prepare(
                     "INSERT INTO UprawnieniObywatele (okreg, idObywatela, glosDoSenatu, glosDoSejmu) VALUES (?,?,?,?);"
@@ -73,26 +74,31 @@ public class SetupSession {
     }
 
     private void prepareCandidateSetup(){
-        Random random = new Random();
         Integer areaNum = 1;
-        List<Candidate> candidateList = Arrays.asList(objectMapper.readValue(new File("src/main/resource/candidates" +
-                ".json"),	Candidate[].class));
-        Integer counter = 0;
-        for (Candidate candidate : candidateList) {
-            // umieszczanie kolejnych kandydatów w następnym okręgu wyborczym. Kazdy okręg po 28 kandydatów
-            if(counter % 27 == 0){
-                areaNum += 1;
-            }
-            String name = candidate.getName;
-            String surname = candidate.getSurname();
-            UUID candidateId = UUID.randomUUID();
+        ObjectMapper mapper = new ObjectMapper();
+        try{
+            List<Candidate> candidateList = mapper.readValue(
+                    new File("src/main/resource/candidates.json"),
+                    new TypeReference<List<Candidate>>() {});
+            Integer counter = 0;
+            for (Candidate candidate : candidateList) {
+                // umieszczanie kolejnych kandydatów w następnym okręgu wyborczym. Kazdy okręg po 28 kandydatów
+                if(counter % 27 == 0){
+                    areaNum += 1;
+                }
+                String name = candidate.getName();
+                String surname = candidate.getSurname();
+                UUID candidateId = UUID.randomUUID();
 
-            try {
-                insertCandidate(areaNum, candidateId, name, surname);
-                counter++;
-            } catch (Exception e) {
-                System.err.println("Error inserting user: " + e.getMessage());
+                try {
+                    insertCandidate(areaNum, candidateId, name, surname);
+                    counter++;
+                } catch (Exception e) {
+                    System.err.println("Error inserting user: " + e.getMessage());
+                }
             }
+        }catch(IOException e){
+            e.printStackTrace();
         }
     }
 
@@ -109,7 +115,7 @@ public class SetupSession {
 
     private void insertCandidate(Integer areaNum, UUID candidateId, String name, String surname) throws  BackendException{
         BoundStatement bs = new BoundStatement(INSERT_CANDIDATE);
-        bs.bind(areaNum, citizenId, name, surname);
+        bs.bind(areaNum, candidateId, name, surname);
 
         try {
             session.execute(bs);
