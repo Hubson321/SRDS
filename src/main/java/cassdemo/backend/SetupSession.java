@@ -6,6 +6,7 @@ import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Session;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.UUID;
 
 import java.io.File;
@@ -81,8 +82,10 @@ public class SetupSession {
         ObjectMapper mapper = new ObjectMapper();
         try{
             List<Candidate> candidateList = mapper.readValue(
-                    new File("src/main/resource/candidates.json"),
-                    new TypeReference<List<Candidate>>() {});
+                    SetupSession.class.getResourceAsStream("/candidates.json"),
+                    new TypeReference<List<Candidate>>() {}
+            );
+
             Integer counter = 0;
             for (Candidate candidate : candidateList) {
                 // umieszczanie kolejnych kandydatów w następnym okręgu wyborczym. Kazdy okręg po 28 kandydatów
