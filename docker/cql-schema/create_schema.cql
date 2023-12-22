@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS Frequency
 CREATE TABLE IF NOT EXISTS SenatWyniki
 (
     idKandydata uuid,
-    okreg, int,
+    okreg int,
     imie varchar,
     nazwisko varchar,
     votes counter,
