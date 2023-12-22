@@ -6,10 +6,8 @@ import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Session;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.UUID;
 
-import java.io.File;
 import java.util.List;
 
 import cassdemo.ObjectsModel.Candidate;
@@ -22,7 +20,7 @@ public class SetupSession {
 
     private static final Logger logger = LoggerFactory.getLogger(BackendSession.class);
     private static PreparedStatement INSERT_CITIZEN;
-    private static PreparedStatement INSERT_CANDIDATE_PARLIEMENT;
+    private static PreparedStatement INSERT_CANDIDATE_PARLIAMENT;
     private static  PreparedStatement INSERT_CANDIDATE_SENATE;
     private Session session;
 
@@ -47,11 +45,11 @@ public class SetupSession {
             INSERT_CITIZEN = session.prepare(
                     "INSERT INTO UprawnieniObywatele (okreg, idObywatela, glosDoSenatu, glosDoSejmu) VALUES (?,?,?,?);"
             );
-            INSERT_CANDIDATE_PARLIEMENT = session.prepare(
-                    "INSERT INTO SejmWyniki(idKandydata,okreg, imie, nazwisko, votes) VALUES (?,?,?,?);"
+            INSERT_CANDIDATE_PARLIAMENT = session.prepare(
+                    "INSERT INTO SejmWyniki(idKandydata,okreg, imie, nazwisko, votes) VALUES (?,?,?,?, ?);"
             );
             INSERT_CANDIDATE_SENATE = session.prepare(
-                    "INSERT INTO SenatWyniki(idKandydata,okreg, imie, nazwisko, votes) VALUES (?,?,?,?);"
+                    "INSERT INTO SenatWyniki(idKandydata,okreg, imie, nazwisko, votes) VALUES (?,?,?,?, ?);"
             );
         } catch (Exception e) {
             throw new BackendException("Could not prepare statements. " + e.getMessage() + ".", e);
@@ -91,8 +89,9 @@ public class SetupSession {
 
             Integer counter = 0;
             for (Candidate candidate : candidateList) {
-                // umieszczanie kolejnych kandydatów w następnym okręgu wyborczym. Kazdy okręg po 28 kandydatów
-                if(counter % 25 == 0){
+                // umieszczanie kolejnych kandydatów w następnym okręgu wyborczym. Kazdy okręg po 30 kandydatów
+                // łącznie 50 okregów
+                if(counter % 30 == 0){
                     areaNum += 1;
                 }
                 String name = candidate.getName();
@@ -100,7 +99,11 @@ public class SetupSession {
                 UUID candidateId = UUID.randomUUID();
 
                 try {
-                    insertCandidate(areaNum, candidateId, name, surname);
+                    if(counter <1000) {
+                        insertCandidateParliement(areaNum, candidateId, name, surname);
+                    }else{
+                        insertCandidateSenate(areaNum, candidateId, name, surname);
+                    }
                     counter++;
                 } catch (Exception e) {
                     System.err.println("Error inserting user: " + e.getMessage());
@@ -122,9 +125,19 @@ public class SetupSession {
         }
     }
 
-    private void insertCandidate(Integer areaNum, UUID candidateId, String name, String surname) throws  BackendException{
-        BoundStatement bs = new BoundStatement(INSERT_CANDIDATE);
-        bs.bind(areaNum, candidateId, name, surname);
+    private void insertCandidateParliement(Integer areaNum, UUID candidateId, String name, String surname) throws  BackendException{
+        BoundStatement bs = new BoundStatement(INSERT_CANDIDATE_PARLIAMENT);
+        bs.bind(candidateId, areaNum,name, surname, 0);
+
+        try {
+            session.execute(bs);
+        } catch (Exception e) {
+            throw new BackendException("Could not perform an upsert. " + e.getMessage() + ".", e);
+        }
+    }
+    private void insertCandidateSenate(Integer areaNum, UUID candidateId, String name, String surname) throws  BackendException{
+        BoundStatement bs = new BoundStatement(INSERT_CANDIDATE_SENATE);
+        bs.bind(candidateId, areaNum, name, surname, 0);
 
         try {
             session.execute(bs);
