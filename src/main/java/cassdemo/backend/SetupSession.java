@@ -22,7 +22,8 @@ public class SetupSession {
 
     private static final Logger logger = LoggerFactory.getLogger(BackendSession.class);
     private static PreparedStatement INSERT_CITIZEN;
-    private static PreparedStatement INSERT_CANDIDATE;
+    private static PreparedStatement INSERT_CANDIDATE_PARLIEMENT;
+    private static  PreparedStatement INSERT_CANDIDATE_SENATE;
     private Session session;
 
     public SetupSession(String contactPoint, String keyspace) throws BackendException {
@@ -46,8 +47,11 @@ public class SetupSession {
             INSERT_CITIZEN = session.prepare(
                     "INSERT INTO UprawnieniObywatele (okreg, idObywatela, glosDoSenatu, glosDoSejmu) VALUES (?,?,?,?);"
             );
-            INSERT_CANDIDATE = session.prepare(
-                    "INSERT INTO Okregi(okreg, idKandydata, imie, nazwisko) VALUES (?,?,?,?);"
+            INSERT_CANDIDATE_PARLIEMENT = session.prepare(
+                    "INSERT INTO SejmWyniki(idKandydata,okreg, imie, nazwisko, votes) VALUES (?,?,?,?);"
+            );
+            INSERT_CANDIDATE_SENATE = session.prepare(
+                    "INSERT INTO SenatWyniki(idKandydata,okreg, imie, nazwisko, votes) VALUES (?,?,?,?);"
             );
         } catch (Exception e) {
             throw new BackendException("Could not prepare statements. " + e.getMessage() + ".", e);
@@ -68,7 +72,6 @@ public class SetupSession {
             if( i % 25000 == 0){
                 areaNum += 1;
             }
-
             try {
                 insertCitizen(userId, areaNum);
             } catch (Exception e) {
