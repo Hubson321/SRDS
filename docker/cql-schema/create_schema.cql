@@ -12,16 +12,6 @@ CREATE TABLE IF NOT EXISTS UprawnieniObywatele
     PRIMARY KEY (okreg, idObywatela, glosDoSenatu, glosDoSejmu)
     );
 
-
-CREATE TABLE IF NOT EXISTS Okregi
-(
-    okreg       int,
-    idKandydata uuid,
-    imie varchar,
-    nazwisko varchar,
-    PRIMARY KEY (okreg, idKandydata, imie, nazwisko)
-    );
-
 CREATE TABLE IF NOT EXISTS Frequency
 (
     voteTimeStamp timestamp,
@@ -32,17 +22,19 @@ CREATE TABLE IF NOT EXISTS Frequency
 CREATE TABLE IF NOT EXISTS SenatWyniki
 (
     idKandydata uuid,
+    okreg, int,
     imie varchar,
     nazwisko varchar,
     votes counter,
-    PRIMARY KEY ( idKandydata, imie, nazwisko )
+    PRIMARY KEY ( (idKandydata, okreg), imie, nazwisko )
     );
 
 CREATE TABLE IF NOT EXISTS SejmWyniki
 (
     idKandydata uuid,
+    okreg int,
     imie varchar,
     nazwisko varchar,
     votes counter,
-    PRIMARY KEY ( idKandydata, imie, nazwisko )
+    PRIMARY KEY ( (idKandydata, okreg), imie, nazwisko )
     );
