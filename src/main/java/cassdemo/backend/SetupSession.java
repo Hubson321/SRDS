@@ -82,35 +82,53 @@ public class SetupSession {
         Integer areaNum = 1;
         ObjectMapper mapper = new ObjectMapper();
         try{
-            List<Candidate> candidateList = mapper.readValue(
-                    SetupSession.class.getResourceAsStream("/candidates.json"),
+            List<Candidate> parliamentList = mapper.readValue(
+                    SetupSession.class.getResourceAsStream("/parliament.json"),
                     new TypeReference<List<Candidate>>() {}
             );
+            List<Candidate> senateList = mapper.readValue(
+                    SetupSession.class.getResourceAsStream("/senate.json"),
+                    new TypeReference<List<Candidate>>() {}
+            );
+            prepareCandidatesList(parliamentList, true);
+            prepareCandidatesList(senateList, false);
 
-            Integer counter = 0;
-            for (Candidate candidate : candidateList) {
-                // umieszczanie kolejnych kandydatów w następnym okręgu wyborczym. Kazdy okręg po 30 kandydatów
-                // łącznie 50 okregów
-                if(counter % 30 == 0){
-                    areaNum += 1;
-                }
-                String name = candidate.getName();
-                String surname = candidate.getSurname();
-                UUID candidateId = UUID.randomUUID();
-
-                try {
-                    if(counter <1000) {
-                        insertCandidateParliement(areaNum, candidateId, name, surname);
-                    }else{
-                        insertCandidateSenate(areaNum, candidateId, name, surname);
-                    }
-                    counter++;
-                } catch (Exception e) {
-                    System.err.println("Error inserting user: " + e.getMessage());
-                }
-            }
         }catch(IOException e){
             e.printStackTrace();
+        }
+    }
+
+    private void prepareCandidatesList(List<Candidate> candidates, Boolean ifParliament){
+        Integer counter = 0;
+        Integer areaNum = 1;
+        Integer areaFactor;
+        // W zależności do której izby przygotowujemy liste inny współczynnik. Dla Senatu mamy 500
+        // kandydatów, a dla Sejmu 1000 kandydatów. Wszędzie po 50 okręgów.
+        if(ifParliament){
+            areaFactor = 30;
+        }else{
+            areaFactor = 10;
+        }
+        for (Candidate candidate : candidates) {
+            // umieszczanie kolejnych kandydatów w następnym okręgu wyborczym. Kazdy okręg po 10 kandydatów
+            // łącznie 50 okregów spośród 500 kandydatów
+            if(counter % areaFactor == 0){
+                areaNum += 1;
+            }
+            String name = candidate.getName();
+            String surname = candidate.getSurname();
+            UUID candidateId = UUID.randomUUID();
+
+            try {
+                if (ifParliament){
+                    insertCandidateParliament(areaNum, candidateId, name, surname);
+                }else{
+                    insertCandidateSenate(areaNum, candidateId, name, surname);
+                }
+                counter++;
+            } catch (Exception e) {
+                System.err.println("Error inserting user: " + e.getMessage());
+            }
         }
     }
 
@@ -125,7 +143,7 @@ public class SetupSession {
         }
     }
 
-    private void insertCandidateParliement(Integer areaNum, UUID candidateId, String name, String surname) throws  BackendException{
+    private void insertCandidateParliament(Integer areaNum, UUID candidateId, String name, String surname) throws  BackendException{
         BoundStatement bs = new BoundStatement(INSERT_CANDIDATE_PARLIAMENT);
         bs.bind(candidateId, areaNum,name, surname, 0);
 
