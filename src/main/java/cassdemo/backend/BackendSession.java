@@ -47,6 +47,8 @@ public class BackendSession {
 	private static PreparedStatement SELECT_ALL_FROM_USERS;
 	private static PreparedStatement INSERT_INTO_USERS;
 	private static PreparedStatement DELETE_ALL_FROM_USERS;
+	private static PreparedStatement GET_FINAL_RESULT_PARLIAMENT;
+	private static PreparedStatement GET_FINAL_RESULT_SENATE;
 
 	private static final String USER_FORMAT = "- %-10s  %-16s %-10s %-10s\n";
 	// private static final SimpleDateFormat df = new
@@ -58,6 +60,9 @@ public class BackendSession {
 			INSERT_INTO_USERS = session
 					.prepare("INSERT INTO users (companyName, name, phone, street) VALUES (?, ?, ?, ?);");
 			DELETE_ALL_FROM_USERS = session.prepare("TRUNCATE users;");
+			GET_FINAL_RESULT_PARLIAMENT = session.prepare("SELECT imie, nazwisko, votes FROM SejmWyniki ORDER BY DESC;");
+			GET_FINAL_RESULT_SENATE = session.prepare("SELECT imie, nazwisko, votes FROM SenatWyniki ORDER BY " +
+					"DESC;");
 		} catch (Exception e) {
 			throw new BackendException("Could not prepare statements. " + e.getMessage() + ".", e);
 		}
@@ -112,6 +117,30 @@ public class BackendSession {
 		}
 
 		logger.info("All users deleted");
+	}
+
+//	TODO: invoke this function after election has ended
+	public void displayFinalResults(PreparedStatement tableQuery) throws BackendException {
+		printer(GET_FINAL_RESULT_PARLIAMENT);
+		printer(GET_FINAL_RESULT_SENATE);
+	}
+
+	private void printer(PreparedStatement tableQuery) throws BackendException {
+		BoundStatement bs = new BoundStatement(tableQuery);
+		ResultSet rs = null;
+
+		try {
+			rs = session.execute(bs);
+		} catch (Exception e) {
+			throw new BackendException("Could not perform a query. " + e.getMessage() + ".", e);
+		}
+
+		for (Row row : rs) {
+			String name = row.getString("imie");
+			String surname = row.getString("nazwisko");
+			long votes = row.getLong("votes");
+			System.out.printf("%-15s %-15s %-10d%n", name, surname, votes);
+		}
 	}
 
 	protected void finalize() {
