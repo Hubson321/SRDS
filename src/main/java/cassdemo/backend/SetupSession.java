@@ -23,6 +23,8 @@ public class SetupSession {
     private static PreparedStatement INSERT_CANDIDATE_PARLIAMENT;
     private static  PreparedStatement INSERT_CANDIDATE_SENATE;
     private Session session;
+    private Integer ALL_CITIZENS = 10000; // Initial number of citizens
+    private Integer CITIZENS_IN_AREA = 250; // Initial ALL_CITIZENS / CITIZENS_IN_AREA => 41 voting_areas
 
     public SetupSession(String contactPoint, String keyspace) throws BackendException {
 
@@ -36,7 +38,7 @@ public class SetupSession {
     }
 
     public void setupCandidatesAndCitizens() {
-//        this.prepareCitizenSetup();
+        this.prepareCitizenSetup();
         this.prepareCandidateSetup();
     }
 
@@ -46,10 +48,10 @@ public class SetupSession {
                     "INSERT INTO UprawnieniObywatele (okreg, idObywatela, glosDoSenatu, glosDoSejmu) VALUES (?,?,?,?);"
             );
             INSERT_CANDIDATE_PARLIAMENT = session.prepare(
-                    "INSERT INTO SejmWyniki(idKandydata,okreg, imie, nazwisko, votes) VALUES (?,?,?,?, ?);"
+                    "UPDATE SejmWyniki SET votes = votes + 0 WHERE idKandydata = ? AND okreg = ? AND imie = ? AND nazwisko = ?;"
             );
             INSERT_CANDIDATE_SENATE = session.prepare(
-                    "INSERT INTO SenatWyniki(idKandydata,okreg, imie, nazwisko, votes) VALUES (?,?,?,?, ?);"
+                    "UPDATE SenatWyniki SET votes = votes + 0 WHERE idKandydata = ? AND okreg = ? AND imie = ? AND nazwisko = ?;"
             );
         } catch (Exception e) {
             throw new BackendException("Could not prepare statements. " + e.getMessage() + ".", e);
@@ -60,20 +62,19 @@ public class SetupSession {
 
     private void prepareCitizenSetup(){
         Integer areaNum = 1;
-        //  Integer ALL_USERS = 28000000;
-        Integer ALL_USERS = 1000000;
-        // for tests: 1000000 / 40
-        for (int i = 1; i <= ALL_USERS; i++) {
+        for (int i = 1; i <= ALL_CITIZENS; i++) {
             UUID userId = UUID.randomUUID();
-            // jeden z 41 okregów wyborczych
-            // 28 mln / 41 ~ 682927 - tylu obywateli per okręg, tymczasowo mln glosujących
-            if( i % 25000 == 0){
-                areaNum += 1;
-            }
             try {
                 insertCitizen(userId, areaNum);
             } catch (Exception e) {
-                System.err.println("Error inserting user: " + e.getMessage());
+                System.err.println("Error inserting citizens: " + e.getMessage());
+            }
+
+            // jeden z 41 okregów wyborczych
+            // 28 mln / 41 ~ 682927 - tylu obywateli per okręg, tymczasowo mln glosujących
+            // ALL_CITIZENS / 41 ~ CITIZENS_IN_AREA
+            if( i % CITIZENS_IN_AREA == 0){
+                areaNum += 1;
             }
         }
     }
@@ -127,7 +128,7 @@ public class SetupSession {
                 }
                 counter++;
             } catch (Exception e) {
-                System.err.println("Error inserting user: " + e.getMessage());
+                System.err.println("Error inserting candidates: " + e.getMessage());
             }
         }
     }
@@ -145,7 +146,7 @@ public class SetupSession {
 
     private void insertCandidateParliament(Integer areaNum, UUID candidateId, String name, String surname) throws  BackendException{
         BoundStatement bs = new BoundStatement(INSERT_CANDIDATE_PARLIAMENT);
-        bs.bind(candidateId, areaNum,name, surname, 0);
+        bs.bind(candidateId, areaNum,name, surname);
 
         try {
             session.execute(bs);
@@ -155,7 +156,7 @@ public class SetupSession {
     }
     private void insertCandidateSenate(Integer areaNum, UUID candidateId, String name, String surname) throws  BackendException{
         BoundStatement bs = new BoundStatement(INSERT_CANDIDATE_SENATE);
-        bs.bind(candidateId, areaNum, name, surname, 0);
+        bs.bind(candidateId, areaNum, name, surname);
 
         try {
             session.execute(bs);

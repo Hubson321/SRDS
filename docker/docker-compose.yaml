@@ -65,7 +65,7 @@ services:
     build: .
     volumes:
       - ./cql-schema/:/cql-schema/:ro
-      - ../build/project-build/:/build/:ro
+      - ../build/project-build/:/build/
     networks:
       cassandra-cluster-network:
         ipv4_address: 172.18.0.100
