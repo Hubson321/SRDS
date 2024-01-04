@@ -193,11 +193,13 @@ public class BackendSession {
     }
 
     private void printer() {
-
+        System.out.println("[ Imię ] - [ Nazwisko ] - [ Liczba głosów ]");
+        System.out.println("===========================================");
         for (Votes candidateVote : this.candidateFinalResult) {
             System.out.printf("%-15s %-15s %-10d%n", candidateVote.getName(), candidateVote.getSurname(),
                     candidateVote.getVotes());
         }
+        System.out.println("===========================================");
 
         this.candidateFinalResult.clear();
     }

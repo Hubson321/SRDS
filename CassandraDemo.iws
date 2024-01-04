@@ -5,7 +5,6 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e8158e08-a647-4fcb-9c24-1f3e9ec67168" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/main/java/cassdemo/ObjectsModel/Votes.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/CassandraDemo.iws" beforeDir="false" afterPath="$PROJECT_DIR$/CassandraDemo.iws" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/cassdemo/backend/BackendSession.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cassdemo/backend/BackendSession.java" afterDir="false" />
     </list>
@@ -170,6 +169,7 @@
       <workItem from="1702910064998" duration="2815000" />
       <workItem from="1702927773725" duration="7515000" />
       <workItem from="1703265768326" duration="8174000" />
+      <workItem from="1704384525999" duration="109000" />
     </task>
     <servers />
   </component>
