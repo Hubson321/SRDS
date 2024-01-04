@@ -4,9 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="e8158e08-a647-4fcb-9c24-1f3e9ec67168" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/src/main/java/cassdemo/backend/SetupSession.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cassdemo/backend/SetupSession.java" afterDir="false" />
-    </list>
+    <list default="true" id="e8158e08-a647-4fcb-9c24-1f3e9ec67168" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
