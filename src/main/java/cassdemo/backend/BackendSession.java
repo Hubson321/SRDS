@@ -90,9 +90,8 @@ public class BackendSession {
             INSERT_INTO_USERS = session
                     .prepare("INSERT INTO users (companyName, name, phone, street) VALUES (?, ?, ?, ?);");
             DELETE_ALL_FROM_USERS = session.prepare("TRUNCATE users;");
-            GET_FINAL_RESULT_PARLIAMENT = session.prepare("SELECT imie, nazwisko, votes FROM SejmWyniki ORDER BY DESC;");
-            GET_FINAL_RESULT_SENATE = session.prepare("SELECT imie, nazwisko, votes FROM SenatWyniki ORDER BY " +
-                    "DESC;");
+            GET_FINAL_RESULT_PARLIAMENT = session.prepare("SELECT imie, nazwisko, votes FROM SejmWyniki;");
+            GET_FINAL_RESULT_SENATE = session.prepare("SELECT imie, nazwisko, votes FROM SenatWyniki;");
             GET_CITIZEN = session.prepare("SELECT okreg, glosDoSenatu, glosDoSejmu FROM UprawnieniObywatele WHERE " +
                     "glosDoSenatu = false OR glosDoSejmu = false ORDER BY timestamp LIMIT 1;");
             GET_CANDIDATE_PARLIAMENT = session.prepare("SELECT idKandydata FROM SejmWyniki WHERE imie = ? AND " +
