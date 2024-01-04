@@ -15,6 +15,6 @@ public class Votes {
     public Votes(String _name, String _surname, Long _votes) {
         this.name = _name;
         this.surname = _surname;
-        this.votes = votes;
+        this.votes = _votes;
     }
 }
