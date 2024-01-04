@@ -1,16 +1,14 @@
 package cassdemo.backend;
 
 import cassdemo.ObjectsModel.Candidate;
+import cassdemo.ObjectsModel.Votes;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.TypeReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Random;
-import java.util.UUID;
-
-import java.util.List;
+import java.util.*;
 
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.Cluster;
@@ -64,6 +62,7 @@ public class BackendSession {
     // SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     private List<Candidate> senateCandidates;
     private List<Candidate> parliamentCandidates;
+    private List<Votes> candidateFinalResult;
 
     public BackendSession() {
         ObjectMapper mapper = new ObjectMapper();
@@ -164,11 +163,13 @@ public class BackendSession {
 
     //	TODO: invoke this function after election has ended
     public void displayFinalResults(PreparedStatement tableQuery) throws BackendException {
-        printer(GET_FINAL_RESULT_PARLIAMENT);
-        printer(GET_FINAL_RESULT_SENATE);
+        System.out.println("Wyniki do Sejmu: \n");
+        prepareResults(GET_FINAL_RESULT_PARLIAMENT);
+        System.out.println("Wyniki do Senatu: \n");
+        prepareResults(GET_FINAL_RESULT_SENATE);
     }
 
-    private void printer(PreparedStatement tableQuery) throws BackendException {
+    private void prepareResults(PreparedStatement tableQuery) throws BackendException {
         BoundStatement bs = new BoundStatement(tableQuery);
         ResultSet rs = null;
 
@@ -182,8 +183,23 @@ public class BackendSession {
             String name = row.getString("imie");
             String surname = row.getString("nazwisko");
             long votes = row.getLong("votes");
-            System.out.printf("%-15s %-15s %-10d%n", name, surname, votes);
+            Votes candidateVote = new Votes(name, surname, votes);
+            this.candidateFinalResult.add(candidateVote);
         }
+        if (this.candidateFinalResult.size() != 0) {
+            this.candidateFinalResult.sort(Comparator.comparingLong(Votes::getVotes).reversed());
+            printer();
+        }
+    }
+
+    private void printer() {
+
+        for (Votes candidateVote : this.candidateFinalResult) {
+            System.out.printf("%-15s %-15s %-10d%n", candidateVote.getName(), candidateVote.getSurname(),
+                    candidateVote.getVotes());
+        }
+
+        this.candidateFinalResult.clear();
     }
 
     public void voting() throws BackendException {
