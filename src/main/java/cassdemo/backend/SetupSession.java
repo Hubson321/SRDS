@@ -24,7 +24,7 @@ public class SetupSession {
     private static PreparedStatement INSERT_CANDIDATE_SENATE;
     private Session session;
     private Integer ALL_CITIZENS = 10000; // Initial number of citizens
-    private Integer CITIZENS_IN_AREA = 250; // Initial ALL_CITIZENS / CITIZENS_IN_AREA => 50 voting_areas
+    private Integer CITIZENS_IN_AREA = 200; // Initial ALL_CITIZENS / CITIZENS_IN_AREA => 50 voting_areas
 
     public SetupSession(String contactPoint, String keyspace) throws BackendException {
 

@@ -91,8 +91,9 @@ public class BackendSession {
         int firstAreaID = lowerBound;
         int lastAreaID = upperBound;
 
-        double mean = 25.5;
-        double stddev = 10.0;
+        double mean = (lowerBound + upperBound) / 2.0;
+		double variance = Math.pow(upperBound - lowerBound, 2) / 12.0;
+		double stddev = Math.sqrt(variance);
 
         // Rozklad normalny
         double u1 = 1.0 - random.nextDouble();
@@ -124,7 +125,7 @@ public class BackendSession {
 
     private void prepareStatements() throws BackendException {
         try {
-            GET_CITIZEN_CONSTITUENCY = session.prepare("SELECT idobywatela, glosdosenatu, glosdosejmu FROM uprawnieniobywatele WHERE okreg = ?;");
+            GET_CITIZEN_CONSTITUENCY = session.prepare("SELECT okreg, idobywatela, glosdosenatu, glosdosejmu FROM uprawnieniobywatele WHERE okreg = ?;");
             GET_CITIZEN = session.prepare("SELECT okreg, idObywatela, glosDoSejmu, glosDoSenatu FROM uprawnieniObywatele WHERE okreg = ? AND idObywatela = ?");
             GET_CITIZENS = session.prepare("SELECT okreg, idobywatela, glosdosenatu, glosdosejmu FROM uprawnieniobywatele;");
             DELETE_CITIZEN = session.prepare("DELETE FROM uprawnieniObywatele WHERE okreg = ? AND idobywatela = ?;");
@@ -187,14 +188,17 @@ public class BackendSession {
     }
 
     public Citizen getRandomCitizen() throws BackendException {
-        BoundStatement bs = new BoundStatement(GET_CITIZENS);
+		// do sprawdzenia przy wiekszej liczbie obywateli, czy bedzie koniecznosc (?)
+		Random random = new Random();
+		int randomArea = random.nextInt(50) + 1;
+        BoundStatement bs = new BoundStatement(GET_CITIZEN_CONSTITUENCY);
+		bs.bind(randomArea);
         ResultSet rs = null;
         try {
             rs = session.execute(bs);
             List < Row > rows = rs.all();
 
             if (!rows.isEmpty()) {
-                Random random = new Random();
                 int citizenIndex = random.nextInt(rows.size());
                 Row randomCitizenRow = rows.get(citizenIndex);
 
@@ -209,7 +213,7 @@ public class BackendSession {
 
                 return randomCitizen;
             } else {
-                System.out.println("rows are empty!");
+                System.out.println("[getRandomCitizen] rows are empty!");
             }
         } catch (Exception e) {
             throw new BackendException("[getRandomCitizen] Could not perform a query. " + e.getMessage() + ".", e);
@@ -261,7 +265,7 @@ public class BackendSession {
 
                 return randomCandidate;
             } else {
-                System.out.println("rows are empty!");
+                System.out.println("[getRandomCandidate] rows are empty!");
             }
         } catch (Exception e) {
             throw new BackendException("[getRandomCandidate] Could not perform a query. " + e.getMessage() + ".", e);
@@ -307,7 +311,7 @@ public class BackendSession {
 
                 return randomCandidate;
             } else {
-                System.out.println("rows are empty!");
+                System.out.println("[getRandomGaussianCandidate] rows are empty!");
             }
         } catch (Exception e) {
             throw new BackendException("[getRandomGaussianCandidate] Could not perform a query. " + e.getMessage() + ".", e);
@@ -373,11 +377,11 @@ public class BackendSession {
             candidate.getSurname()
         );
 
-        System.out.println("----------------------voteParliament----------------------");
-        System.out.println("candidateID: " + candidate.getCandidateId());
-        System.out.println("citizenID: " + citizen.getCitizenId());
-        System.out.println("areaID: " + candidate.getAreaId());
-        System.out.println("----------------------------------------------------------");
+        // System.out.println("----------------------voteParliament----------------------");
+        // System.out.println("candidateID: " + candidate.getCandidateId());
+        // System.out.println("citizenID: " + citizen.getCitizenId());
+        // System.out.println("areaID: " + candidate.getAreaId());
+        // System.out.println("----------------------------------------------------------");
 
         if (candidate.getCandidateId() != null) {
             BoundStatement updateCitizenVote = new BoundStatement(UPDATE_CITIZEN_PARLIAMENT);
@@ -433,11 +437,11 @@ public class BackendSession {
             candidate.getSurname()
         );
 
-        System.out.println("------------------------voteSenate------------------------");
-        System.out.println("candidateID: " + candidate.getCandidateId());
-        System.out.println("citizenID: " + citizen.getCitizenId());
-        System.out.println("areaID: " + candidate.getAreaId());
-        System.out.println("----------------------------------------------------------");
+        // System.out.println("------------------------voteSenate------------------------");
+        // System.out.println("candidateID: " + candidate.getCandidateId());
+        // System.out.println("citizenID: " + citizen.getCitizenId());
+        // System.out.println("areaID: " + candidate.getAreaId());
+        // System.out.println("----------------------------------------------------------");
 
         if (candidate.getCandidateId() != null) {
             BoundStatement updateCitizenVote = new BoundStatement(UPDATE_CITIZEN_SENATE);
@@ -475,11 +479,11 @@ public class BackendSession {
         if (actualCitizen.getVoiceToParliament() && actualCitizen.getVoiceToSenate()) {
 			try {
 				deleteCitizen(actualCitizen.getAreaId(), actualCitizen.getCitizenId());
-				System.out.println("--------------------------voting--------------------------");
-				System.out.println("Deleted citizen.");
-				System.out.println("AreaID: " + actualCitizen.getAreaId());
-				System.out.println("CitizenID: " + actualCitizen.getCitizenId());
-				System.out.println("----------------------------------------------------------");
+				// System.out.println("--------------------------voting--------------------------");
+				// System.out.println("Deleted citizen.");
+				// System.out.println("AreaID: " + actualCitizen.getAreaId());
+				// System.out.println("CitizenID: " + actualCitizen.getCitizenId());
+				// System.out.println("----------------------------------------------------------");
 			} catch (Exception e) {
                 throw new BackendException("[voteSenate] Could not posible to delete citizen. " + e.getMessage() + ".", e);
             }
