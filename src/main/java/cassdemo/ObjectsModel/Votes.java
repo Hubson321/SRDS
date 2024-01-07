@@ -7,12 +7,14 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class Candidate {
+public class Votes {
     public String name;
     public String surname;
+    Long votes;
 
-    public Candidate(String _name, String _surname) {
+    public Votes(String _name, String _surname, Long _votes) {
         this.name = _name;
         this.surname = _surname;
+        this.votes = _votes;
     }
 }
