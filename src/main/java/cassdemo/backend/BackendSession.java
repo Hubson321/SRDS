@@ -86,6 +86,24 @@ public class BackendSession {
     private List <Candidate> parliamentCandidates;
     private List <Votes> candidateFinalResult;
 
+	private Integer getGaussianRandomNumber(int lowerBound, int upperBound) {
+        Random random = new Random();
+        int firstAreaID = lowerBound;
+        int lastAreaID = upperBound;
+
+        double mean = 25.5;
+        double stddev = 10.0;
+
+        // Rozklad normalny
+        double u1 = 1.0 - random.nextDouble();
+        double u2 = 1.0 - random.nextDouble();
+        double randStdNormal = Math.sqrt(-2.0 * Math.log(u1)) * Math.sin(2.0 * Math.PI * u2);
+        double randNormal = mean + stddev * randStdNormal;
+        int randomNumber = (int) Math.round(Math.min(Math.max(randNormal, firstAreaID), lastAreaID));
+
+        return randomNumber;
+    }
+
     public BackendSession() {
         // taka sama definicja w drugim miejscu
         ObjectMapper mapper = new ObjectMapper();
@@ -251,6 +269,52 @@ public class BackendSession {
         return null;
     }
 
+	public Candidate getRandomGaussianCandidate(VotingType votingType, Integer areaID) throws BackendException {
+        BoundStatement bs = null;
+		int candidateIndex = 1;
+        if (votingType == VotingType.PARLIAMENT) {
+            bs = new BoundStatement(GET_CANDIDATES_PARLIAMENT);
+        } else {
+            bs = new BoundStatement(GET_CANDIDATES_SENATE);
+        }
+
+        ResultSet rs = null;
+        try {
+            bs.bind(areaID);
+            rs = session.execute(bs);
+            List < Row > rows = rs.all();
+
+            if (!rows.isEmpty()) {
+                // ID w oparciu o wszystkich z danego okregu
+                // wartosci generowane wykorzystujac rozklad normalny
+				// 20 kandydatow w jednym okregu do sejmu, 10 do senatu
+				if (votingType == VotingType.PARLIAMENT) {
+					candidateIndex = getGaussianRandomNumber(1, 20);
+				} else {
+					candidateIndex = getGaussianRandomNumber(1, 10);
+				}
+                
+                Row randomCandidateRow = rows.get(candidateIndex - 1);
+
+                UUID candidateID = randomCandidateRow.getUUID("idkandydata");
+                Integer CandidateAreaID = randomCandidateRow.getInt("okreg");
+                String candidateName = randomCandidateRow.getString("imie");
+                String candidateSurname = randomCandidateRow.getString("nazwisko");
+
+                Candidate randomCandidate = new Candidate(candidateName, candidateSurname);
+                randomCandidate.setCandidateId(candidateID);
+                randomCandidate.setAreaId(CandidateAreaID);
+
+                return randomCandidate;
+            } else {
+                System.out.println("rows are empty!");
+            }
+        } catch (Exception e) {
+            throw new BackendException("[getRandomGaussianCandidate] Could not perform a query. " + e.getMessage() + ".", e);
+        }
+        return null;
+    }
+
     public Long getCandidateVotes(Candidate candidate, VotingType votingType) throws BackendException {
         BoundStatement bs = null;
         Long candidateVotes = 0l;
@@ -283,21 +347,21 @@ public class BackendSession {
         double randomValue = random.nextDouble(); // pobieramy wartosc od [0,1)
 
         if (randomValue < probability) {
-			candidate = getRandomCandidate(VotingType.PARLIAMENT, citizen.getAreaID());
+			candidate = getRandomGaussianCandidate(VotingType.PARLIAMENT, citizen.getAreaId());
         } else {
             // z zakresu od 1 do 50 - zakres okregow wyborczych
             Integer randomAreaID = getRandomNumber(1, 50);
-            candidate = getRandomCandidate(VotingType.PARLIAMENT, randomAreaID);
+            candidate = getRandomGaussianCandidate(VotingType.PARLIAMENT, randomAreaID);
         }
 
-        while (candidate.getAreaId() != citizen.getAreaID()) {
+        while (candidate.getAreaId() != citizen.getAreaId()) {
             randomValue = random.nextDouble();
             if (randomValue < probability) {
-                candidate = getRandomCandidate(VotingType.PARLIAMENT, citizen.getAreaID());
+                candidate = getRandomGaussianCandidate(VotingType.PARLIAMENT, citizen.getAreaId());
             } else {
                 // z zakresu od 1 do 50 - zakres okregow wyborczych
                 Integer randomAreaID = getRandomNumber(1, 50);
-                candidate = getRandomCandidate(VotingType.PARLIAMENT, randomAreaID);
+                candidate = getRandomGaussianCandidate(VotingType.PARLIAMENT, randomAreaID);
             }
         }
 
@@ -311,13 +375,13 @@ public class BackendSession {
 
         System.out.println("----------------------voteParliament----------------------");
         System.out.println("candidateID: " + candidate.getCandidateId());
-        System.out.println("citizenID: " + citizen.getCitizenID());
+        System.out.println("citizenID: " + citizen.getCitizenId());
         System.out.println("areaID: " + candidate.getAreaId());
         System.out.println("----------------------------------------------------------");
 
         if (candidate.getCandidateId() != null) {
             BoundStatement updateCitizenVote = new BoundStatement(UPDATE_CITIZEN_PARLIAMENT);
-            updateCitizenVote.bind(true, citizen.getAreaID(), citizen.getCitizenID());
+            updateCitizenVote.bind(true, citizen.getAreaId(), citizen.getCitizenId());
             BoundStatement updateParliamentCandidate = new BoundStatement(UPDATE_CANDIDATE_PARLIAMENT);
             updateParliamentCandidate.bind(
                 candidate.getCandidateId(),
@@ -343,21 +407,21 @@ public class BackendSession {
         double randomValue = random.nextDouble(); // pobieramy wartosc od [0,1)
 
         if (randomValue < probability) {
-			candidate = getRandomCandidate(VotingType.SENATE, citizen.getAreaID());
+			candidate = getRandomGaussianCandidate(VotingType.SENATE, citizen.getAreaId());
         } else {
             // z zakresu od 1 do 50 - zakres okregow wyborczych
             Integer randomAreaID = getRandomNumber(1, 50);
-            candidate = getRandomCandidate(VotingType.SENATE, randomAreaID);
+            candidate = getRandomGaussianCandidate(VotingType.SENATE, randomAreaID);
         }
 
-        while (candidate.getAreaId() != citizen.getAreaID()) {
+        while (candidate.getAreaId() != citizen.getAreaId()) {
             randomValue = random.nextDouble();
             if (randomValue < probability) {
-                candidate = getRandomCandidate(VotingType.SENATE, citizen.getAreaID());
+                candidate = getRandomGaussianCandidate(VotingType.SENATE, citizen.getAreaId());
             } else {
                 // z zakresu od 1 do 50 - zakres okregow wyborczych
                 Integer randomAreaID = getRandomNumber(1, 50);
-                candidate = getRandomCandidate(VotingType.SENATE, randomAreaID);
+                candidate = getRandomGaussianCandidate(VotingType.SENATE, randomAreaID);
             }
         }
 
@@ -371,13 +435,13 @@ public class BackendSession {
 
         System.out.println("------------------------voteSenate------------------------");
         System.out.println("candidateID: " + candidate.getCandidateId());
-        System.out.println("citizenID: " + citizen.getCitizenID());
+        System.out.println("citizenID: " + citizen.getCitizenId());
         System.out.println("areaID: " + candidate.getAreaId());
         System.out.println("----------------------------------------------------------");
 
         if (candidate.getCandidateId() != null) {
             BoundStatement updateCitizenVote = new BoundStatement(UPDATE_CITIZEN_SENATE);
-            updateCitizenVote.bind(true, citizen.getAreaID(), citizen.getCitizenID());
+            updateCitizenVote.bind(true, citizen.getAreaId(), citizen.getCitizenId());
             BoundStatement updateParliamentCandidate = new BoundStatement(UPDATE_CANDIDATE_SENATE);
             updateParliamentCandidate.bind(
                 candidate.getCandidateId(),
@@ -406,15 +470,15 @@ public class BackendSession {
             voteSenate(citizen);
         }
 
-        Citizen actualCitizen = getCitizen(citizen.getAreaID(), citizen.getCitizenID());
+        Citizen actualCitizen = getCitizen(citizen.getAreaId(), citizen.getCitizenId());
 
         if (actualCitizen.getVoiceToParliament() && actualCitizen.getVoiceToSenate()) {
 			try {
-				deleteCitizen(actualCitizen.getAreaID(), actualCitizen.getCitizenID());
+				deleteCitizen(actualCitizen.getAreaId(), actualCitizen.getCitizenId());
 				System.out.println("--------------------------voting--------------------------");
 				System.out.println("Deleted citizen.");
-				System.out.println("AreaID: " + actualCitizen.getAreaID());
-				System.out.println("CitizenID: " + actualCitizen.getCitizenID());
+				System.out.println("AreaID: " + actualCitizen.getAreaId());
+				System.out.println("CitizenID: " + actualCitizen.getCitizenId());
 				System.out.println("----------------------------------------------------------");
 			} catch (Exception e) {
                 throw new BackendException("[voteSenate] Could not posible to delete citizen. " + e.getMessage() + ".", e);
