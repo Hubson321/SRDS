@@ -114,9 +114,7 @@ public class SetupSession {
         for (Candidate candidate : candidates) {
             // umieszczanie kolejnych kandydatów w następnym okręgu wyborczym. Kazdy okręg po 10 kandydatów
             // łącznie 50 okregów spośród 500 kandydatów
-            if (counter % areaFactor == 0) {
-                areaNum += 1;
-            }
+            
             String name = candidate.getName();
             String surname = candidate.getSurname();
             UUID candidateId = UUID.randomUUID();
@@ -130,6 +128,10 @@ public class SetupSession {
                 counter++;
             } catch (Exception e) {
                 System.err.println("[prepareCandidatesList] Error inserting candidates: " + e.getMessage());
+            }
+
+            if(counter % areaFactor == 0){
+                areaNum += 1;
             }
         }
     }
