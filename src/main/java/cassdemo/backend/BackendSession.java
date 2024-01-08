@@ -149,7 +149,7 @@ public class BackendSession {
     }
 
     //        TODO: invoke this function after election has ended
-    public void displayFinalResults(PreparedStatement tableQuery) throws BackendException {
+    public void displayFinalResults() throws BackendException {
         System.out.println("Wyniki do Sejmu: \n");
         prepareResults(GET_CANDIDATES_PARLIAMENT);
 
