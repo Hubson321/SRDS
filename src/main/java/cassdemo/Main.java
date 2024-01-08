@@ -59,6 +59,7 @@ public class Main {
         System.out.println("----------------------------------------------------------");
 		System.out.println("Koniec glosowania");
         System.out.println("----------------------------------------------------------");
+
         System.exit(0);
     }
 
