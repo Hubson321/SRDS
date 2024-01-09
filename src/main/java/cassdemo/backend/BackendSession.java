@@ -33,6 +33,8 @@ public class BackendSession {
     private static final Logger logger = LoggerFactory.getLogger(BackendSession.class);
 
     private Session session;
+    private static final String USER_FORMAT = "- %-10s  %-16s %-10s %-10s\n";
+    private List<Candidate> candidateFinalResult = new ArrayList<Candidate>();
 
     public BackendSession(String contactPoint, String keyspace) throws BackendException {
 
@@ -63,7 +65,6 @@ public class BackendSession {
     private static PreparedStatement GET_CANDIDATE_PARLIAMENT_VOTES;
     private static PreparedStatement GET_CANDIDATE_SENATE_VOTES;
 
-    private static final String USER_FORMAT = "- %-10s  %-16s %-10s %-10s\n";
     // private static final SimpleDateFormat df = new
     // SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
@@ -78,9 +79,6 @@ public class BackendSession {
         return randomNumber;
     }
 
-    private List<Candidate> senateCandidates;
-    private List<Candidate> parliamentCandidates;
-    private List<Candidate> candidateFinalResult;
 
     private Integer getGaussianRandomNumber(int lowerBound, int upperBound) {
         Random random = new Random();
@@ -99,26 +97,6 @@ public class BackendSession {
         int randomNumber = (int) Math.round(Math.min(Math.max(randNormal, firstAreaID), lastAreaID));
 
         return randomNumber;
-    }
-
-    public BackendSession() {
-        // taka sama definicja w drugim miejscu
-        ObjectMapper mapper = new ObjectMapper();
-        try {
-            this.parliamentCandidates = mapper.readValue(
-                    SetupSession.class.getResourceAsStream("/parliament.json"),
-                    new TypeReference<List<Candidate>>() {
-                    }
-            );
-            this.senateCandidates = mapper.readValue(
-                    SetupSession.class.getResourceAsStream("/senate.json"),
-                    new TypeReference<List<Candidate>>() {
-                    }
-            );
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     private void prepareStatements() throws BackendException {
