@@ -2,7 +2,6 @@ package cassdemo.backend;
 
 import cassdemo.ObjectsModel.Candidate;
 import cassdemo.ObjectsModel.Citizen;
-import cassdemo.ObjectsModel.Votes;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.TypeReference;
 import org.slf4j.Logger;
@@ -34,6 +33,8 @@ public class BackendSession {
     private static final Logger logger = LoggerFactory.getLogger(BackendSession.class);
 
     private Session session;
+    private static final String USER_FORMAT = "- %-10s  %-16s %-10s %-10s\n";
+    private List<Candidate> candidateFinalResult = new ArrayList<Candidate>();
 
     public BackendSession(String contactPoint, String keyspace) throws BackendException {
 
@@ -46,9 +47,6 @@ public class BackendSession {
         prepareStatements();
     }
 
-    private static PreparedStatement SELECT_ALL_FROM_USERS;
-    private static PreparedStatement INSERT_INTO_USERS;
-    private static PreparedStatement DELETE_ALL_FROM_USERS;
     private static PreparedStatement GET_FINAL_RESULT_PARLIAMENT;
     private static PreparedStatement GET_FINAL_RESULT_SENATE;
     private static PreparedStatement GET_CITIZEN;
@@ -67,7 +65,6 @@ public class BackendSession {
     private static PreparedStatement GET_CANDIDATE_PARLIAMENT_VOTES;
     private static PreparedStatement GET_CANDIDATE_SENATE_VOTES;
 
-    private static final String USER_FORMAT = "- %-10s  %-16s %-10s %-10s\n";
     // private static final SimpleDateFormat df = new
     // SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
@@ -82,18 +79,15 @@ public class BackendSession {
         return randomNumber;
     }
 
-    private List <Candidate> senateCandidates;
-    private List <Candidate> parliamentCandidates;
-    private List <Votes> candidateFinalResult;
 
-	private Integer getGaussianRandomNumber(int lowerBound, int upperBound) {
+    private Integer getGaussianRandomNumber(int lowerBound, int upperBound) {
         Random random = new Random();
         int firstAreaID = lowerBound;
         int lastAreaID = upperBound;
 
         double mean = (lowerBound + upperBound) / 2.0;
-		double variance = Math.pow(upperBound - lowerBound, 2) / 12.0;
-		double stddev = Math.sqrt(variance);
+        double variance = Math.pow(upperBound - lowerBound, 2) / 12.0;
+        double stddev = Math.sqrt(variance);
 
         // Rozklad normalny
         double u1 = 1.0 - random.nextDouble();
@@ -103,24 +97,6 @@ public class BackendSession {
         int randomNumber = (int) Math.round(Math.min(Math.max(randNormal, firstAreaID), lastAreaID));
 
         return randomNumber;
-    }
-
-    public BackendSession() {
-        // taka sama definicja w drugim miejscu
-        ObjectMapper mapper = new ObjectMapper();
-        try {
-            this.parliamentCandidates = mapper.readValue(
-                SetupSession.class.getResourceAsStream("/parliament.json"),
-                new TypeReference < List < Candidate >> () {}
-            );
-            this.senateCandidates = mapper.readValue(
-                SetupSession.class.getResourceAsStream("/senate.json"),
-                new TypeReference < List < Candidate >> () {}
-            );
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     private void prepareStatements() throws BackendException {
@@ -138,13 +114,10 @@ public class BackendSession {
             GET_CANDIDATE_SENATE_VOTES = session.prepare("SELECT votes FROM senatWyniki WHERE idkandydata = ? AND okreg = ?;");
 
             UPDATE_CANDIDATE_PARLIAMENT = session.prepare("UPDATE SejmWyniki SET votes = votes + 1 WHERE idKandydata = ? AND okreg = ? " +
-                "AND imie = ? AND nazwisko = ?");
+                    "AND imie = ? AND nazwisko = ?");
 
             UPDATE_CANDIDATE_SENATE = session.prepare("UPDATE SenatWyniki SET votes = votes + 1 WHERE idKandydata = ? AND okreg = ? " +
-                "AND imie = ? AND nazwisko = ?");
-
-            GET_FINAL_RESULT_PARLIAMENT = session.prepare("SELECT imie, nazwisko, votes FROM SejmWyniki;");
-            GET_FINAL_RESULT_SENATE = session.prepare("SELECT imie, nazwisko, votes FROM SenatWyniki;");
+                    "AND imie = ? AND nazwisko = ?");
 
         } catch (Exception e) {
             throw new BackendException("[prepareStatements] Could not prepare statements. " + e.getMessage() + ".", e);
@@ -154,11 +127,12 @@ public class BackendSession {
     }
 
     //        TODO: invoke this function after election has ended
-    public void displayFinalResults(PreparedStatement tableQuery) throws BackendException {
+    public void displayFinalResults() throws BackendException {
         System.out.println("Wyniki do Sejmu: \n");
-        prepareResults(GET_FINAL_RESULT_PARLIAMENT);
+        prepareResults(GET_CANDIDATES_PARLIAMENT);
+
         System.out.println("Wyniki do Senatu: \n");
-        prepareResults(GET_FINAL_RESULT_SENATE);
+        prepareResults(GET_CANDIDATES_SENATE);
     }
 
     public Citizen getCitizen(Integer areaID, UUID citizenID) throws BackendException {
@@ -188,15 +162,15 @@ public class BackendSession {
     }
 
     public Citizen getRandomCitizen() throws BackendException {
-		// do sprawdzenia przy wiekszej liczbie obywateli, czy bedzie koniecznosc (?)
-		Random random = new Random();
-		int randomArea = random.nextInt(50) + 1;
+        // do sprawdzenia przy wiekszej liczbie obywateli, czy bedzie koniecznosc (?)
+        Random random = new Random();
+        int randomArea = random.nextInt(50) + 1;
         BoundStatement bs = new BoundStatement(GET_CITIZEN_CONSTITUENCY);
-		bs.bind(randomArea);
+        bs.bind(randomArea);
         ResultSet rs = null;
         try {
             rs = session.execute(bs);
-            List < Row > rows = rs.all();
+            List<Row> rows = rs.all();
 
             if (!rows.isEmpty()) {
                 int citizenIndex = random.nextInt(rows.size());
@@ -247,7 +221,7 @@ public class BackendSession {
         try {
             bs.bind(areaID);
             rs = session.execute(bs);
-            List <Row> rows = rs.all();
+            List<Row> rows = rs.all();
 
             if (!rows.isEmpty()) {
                 Random random = new Random();
@@ -273,9 +247,9 @@ public class BackendSession {
         return null;
     }
 
-	public Candidate getRandomGaussianCandidate(VotingType votingType, Integer areaID) throws BackendException {
+    public Candidate getRandomGaussianCandidate(VotingType votingType, Integer areaID) throws BackendException {
         BoundStatement bs = null;
-		int candidateIndex = 1;
+        int candidateIndex = 1;
         if (votingType == VotingType.PARLIAMENT) {
             bs = new BoundStatement(GET_CANDIDATES_PARLIAMENT);
         } else {
@@ -286,18 +260,18 @@ public class BackendSession {
         try {
             bs.bind(areaID);
             rs = session.execute(bs);
-            List < Row > rows = rs.all();
+            List<Row> rows = rs.all();
 
             if (!rows.isEmpty()) {
                 // ID w oparciu o wszystkich z danego okregu
                 // wartosci generowane wykorzystujac rozklad normalny
-				// 20 kandydatow w jednym okregu do sejmu, 10 do senatu
-				if (votingType == VotingType.PARLIAMENT) {
-					candidateIndex = getGaussianRandomNumber(1, 20);
-				} else {
-					candidateIndex = getGaussianRandomNumber(1, 10);
-				}
-                
+                // 20 kandydatow w jednym okregu do sejmu, 10 do senatu
+                if (votingType == VotingType.PARLIAMENT) {
+                    candidateIndex = getGaussianRandomNumber(1, 20);
+                } else {
+                    candidateIndex = getGaussianRandomNumber(1, 10);
+                }
+
                 Row randomCandidateRow = rows.get(candidateIndex - 1);
 
                 UUID candidateID = randomCandidateRow.getUUID("idkandydata");
@@ -351,7 +325,7 @@ public class BackendSession {
         double randomValue = random.nextDouble(); // pobieramy wartosc od [0,1)
 
         if (randomValue < probability) {
-			candidate = getRandomGaussianCandidate(VotingType.PARLIAMENT, citizen.getAreaId());
+            candidate = getRandomGaussianCandidate(VotingType.PARLIAMENT, citizen.getAreaId());
         } else {
             // z zakresu od 1 do 50 - zakres okregow wyborczych
             Integer randomAreaID = getRandomNumber(1, 50);
@@ -372,9 +346,9 @@ public class BackendSession {
         BoundStatement bs = new BoundStatement(UPDATE_CANDIDATE_PARLIAMENT);
 
         bs.bind(candidate.getCandidateId(),
-            candidate.getAreaId(),
-            candidate.getName(),
-            candidate.getSurname()
+                candidate.getAreaId(),
+                candidate.getName(),
+                candidate.getSurname()
         );
 
         // System.out.println("----------------------voteParliament----------------------");
@@ -388,10 +362,10 @@ public class BackendSession {
             updateCitizenVote.bind(true, citizen.getAreaId(), citizen.getCitizenId());
             BoundStatement updateParliamentCandidate = new BoundStatement(UPDATE_CANDIDATE_PARLIAMENT);
             updateParliamentCandidate.bind(
-                candidate.getCandidateId(),
-                candidate.getAreaId(),
-                candidate.getName(),
-                candidate.getSurname()
+                    candidate.getCandidateId(),
+                    candidate.getAreaId(),
+                    candidate.getName(),
+                    candidate.getSurname()
             );
             try {
                 session.execute(updateCitizenVote);
@@ -411,7 +385,7 @@ public class BackendSession {
         double randomValue = random.nextDouble(); // pobieramy wartosc od [0,1)
 
         if (randomValue < probability) {
-			candidate = getRandomGaussianCandidate(VotingType.SENATE, citizen.getAreaId());
+            candidate = getRandomGaussianCandidate(VotingType.SENATE, citizen.getAreaId());
         } else {
             // z zakresu od 1 do 50 - zakres okregow wyborczych
             Integer randomAreaID = getRandomNumber(1, 50);
@@ -432,9 +406,9 @@ public class BackendSession {
         BoundStatement bs = new BoundStatement(UPDATE_CANDIDATE_SENATE);
 
         bs.bind(candidate.getCandidateId(),
-            candidate.getAreaId(),
-            candidate.getName(),
-            candidate.getSurname()
+                candidate.getAreaId(),
+                candidate.getName(),
+                candidate.getSurname()
         );
 
         // System.out.println("------------------------voteSenate------------------------");
@@ -448,10 +422,10 @@ public class BackendSession {
             updateCitizenVote.bind(true, citizen.getAreaId(), citizen.getCitizenId());
             BoundStatement updateParliamentCandidate = new BoundStatement(UPDATE_CANDIDATE_SENATE);
             updateParliamentCandidate.bind(
-                candidate.getCandidateId(),
-                candidate.getAreaId(),
-                candidate.getName(),
-                candidate.getSurname()
+                    candidate.getCandidateId(),
+                    candidate.getAreaId(),
+                    candidate.getName(),
+                    candidate.getSurname()
             );
             try {
                 session.execute(updateCitizenVote);
@@ -477,14 +451,14 @@ public class BackendSession {
         Citizen actualCitizen = getCitizen(citizen.getAreaId(), citizen.getCitizenId());
 
         if (actualCitizen.getVoiceToParliament() && actualCitizen.getVoiceToSenate()) {
-			try {
-				deleteCitizen(actualCitizen.getAreaId(), actualCitizen.getCitizenId());
-				// System.out.println("--------------------------voting--------------------------");
-				// System.out.println("Deleted citizen.");
-				// System.out.println("AreaID: " + actualCitizen.getAreaId());
-				// System.out.println("CitizenID: " + actualCitizen.getCitizenId());
-				// System.out.println("----------------------------------------------------------");
-			} catch (Exception e) {
+            try {
+                deleteCitizen(actualCitizen.getAreaId(), actualCitizen.getCitizenId());
+                // System.out.println("--------------------------voting--------------------------");
+                // System.out.println("Deleted citizen.");
+                // System.out.println("AreaID: " + actualCitizen.getAreaId());
+                // System.out.println("CitizenID: " + actualCitizen.getCitizenId());
+                // System.out.println("----------------------------------------------------------");
+            } catch (Exception e) {
                 throw new BackendException("[voteSenate] Could not posible to delete citizen. " + e.getMessage() + ".", e);
             }
         }
@@ -494,35 +468,39 @@ public class BackendSession {
         BoundStatement bs = new BoundStatement(tableQuery);
         ResultSet rs = null;
 
-        try {
-            rs = session.execute(bs);
-        } catch (Exception e) {
-            throw new BackendException("[printer] Could not perform a query. " + e.getMessage() + ".", e);
-        }
+        for (Integer idOkregu = 1; idOkregu < 51; idOkregu++) {
+            System.out.println("Okreg nr: " + idOkregu + ":\n");
 
-        for (Row row: rs) {
-            String name = row.getString("imie");
-            String surname = row.getString("nazwisko");
-            long votes = row.getLong("votes");
-            Votes candidateVote = new Votes(name, surname, votes);
-            this.candidateFinalResult.add(candidateVote);
-        }
-        if (this.candidateFinalResult.size() != 0) {
-            this.candidateFinalResult.sort(Comparator.comparingLong(Votes::getVotes).reversed());
-            printer();
-        }
+            try {
+                bs.bind(idOkregu);
+                rs = session.execute(bs);
+            } catch (Exception e) {
+                throw new BackendException("[printer] Could not perform a query. " + e.getMessage() + ".", e);
+            }
 
-        
+            for (Row row : rs) {
+                String name = row.getString("imie");
+                String surname = row.getString("nazwisko");
+                long votes = row.getLong("votes");
+                Candidate candidate = new Candidate(name, surname);
+                candidate.setVotes(votes);
+                this.candidateFinalResult.add(candidate);
+            }
+            if (this.candidateFinalResult.size() != 0) {
+                this.candidateFinalResult.sort(Comparator.comparingLong(Candidate::getVotes).reversed());
+                printer();
+            }
+        }
     }
 
     private void printer() {
         System.out.println("[ Imię ] - [ Nazwisko ] - [ Liczba głosów ]");
-        System.out.println("===========================================");
-        for (Votes candidateVote : this.candidateFinalResult) {
+        System.out.println("===========================================\n");
+        for (Candidate candidateVote : this.candidateFinalResult) {
             System.out.printf("%-15s %-15s %-10d%n", candidateVote.getName(), candidateVote.getSurname(),
                     candidateVote.getVotes());
         }
-
+        System.out.println("===========================================\n");
         this.candidateFinalResult.clear();
     }
 
