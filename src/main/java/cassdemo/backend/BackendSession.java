@@ -40,7 +40,7 @@ public class BackendSession {
     private static final String USER_FORMAT = "- %-10s  %-16s %-10s %-10s\n";
     private List<Candidate> candidateFinalResult = new ArrayList<Candidate>();
     private static Integer RETRY_NUMBER = 3;
-    private static Integer RETRY_INTERVAL = 60000;
+    private static Integer RETRY_INTERVAL = 5000;
     public BackendSession(String contactPoint, String keyspace) throws BackendException {
 
         Cluster cluster = Cluster.builder().addContactPoint(contactPoint)
@@ -170,7 +170,7 @@ public class BackendSession {
         return null;
     }
 
-    public Citizen getRandomCitizen() throws BackendException {
+    public Citizen getRandomCitizen() throws BackendException, CustomNoHostUnavailableException, CustomUnavailableException, InterruptedException {
         // do sprawdzenia przy wiekszej liczbie obywateli, czy bedzie koniecznosc (?)
         Random random = new Random();
         int randomArea = random.nextInt(50) + 1;
@@ -198,8 +198,71 @@ public class BackendSession {
             } else {
                 System.out.println("[getRandomCitizen] rows are empty!");
             }
-        } catch (Exception e) {
-            throw new BackendException("[getRandomCitizen] Could not perform a query. " + e.getMessage() + ".", e);
+        } catch (NoHostAvailableException e1){
+            for (int i = 0;i < RETRY_NUMBER; i++) {
+                Thread.sleep(RETRY_INTERVAL);
+                //call f2
+                try {
+                     getRandomCitizenFallback(randomArea);
+                } catch (CustomNoHostUnavailableException e2) { //! Check
+                    // przykladowo, po 2 probach
+                    if(i == 2){
+                        return getRandomCitizenFallback(randomArea, ConsistencyLevel.ONE);
+                    }
+                }
+            }
+            return null;
+        }
+        catch (UnavailableException e1){
+            for (int i = 0;i < RETRY_NUMBER; i++) {
+                Thread.sleep(RETRY_INTERVAL);
+                //call f2
+                try {
+                     getRandomCitizenFallback(randomArea);
+                } catch (CustomUnavailableException e2) {
+                    // przykladowo, po 2 probach
+                    if(i == 2){
+                        return getRandomCitizenFallback(randomArea, ConsistencyLevel.ONE);
+                    }
+                }
+            }
+            return null;
+        }
+        return null;
+    }
+
+    private Citizen getRandomCitizenFallback(Integer areaID) throws CustomNoHostUnavailableException, CustomUnavailableException {
+        return getRandomCitizenFallback(areaID, ConsistencyLevel.QUORUM);
+    }
+
+    private Citizen getRandomCitizenFallback(Integer areaID, ConsistencyLevel consistencyLevel) throws CustomUnavailableException, CustomNoHostUnavailableException {
+        Random random = new Random();
+        BoundStatement bs = new BoundStatement(GET_CITIZEN_CONSTITUENCY);
+        bs.bind(areaID).setConsistencyLevel(consistencyLevel);
+        ResultSet rs = null;
+        try {
+            rs = session.execute(bs);
+            List<Row> rows = rs.all();
+
+            if (!rows.isEmpty()) {
+                int citizenIndex = random.nextInt(rows.size());
+                Row randomCitizenRow = rows.get(citizenIndex);
+                UUID citizenID = randomCitizenRow.getUUID("idobywatela");
+                Boolean senateVote = randomCitizenRow.getBool("glosdosenatu");
+                Boolean parliamentVote = randomCitizenRow.getBool("glosdosejmu");
+
+                Citizen randomCitizen = new Citizen(citizenID, areaID);
+                randomCitizen.setVoiceToParliament(parliamentVote);
+                randomCitizen.setVoiceToSenate(senateVote);
+
+                return randomCitizen;
+            } else {
+                System.out.println("[getRandomCitizen] rows are empty!");
+            }
+        } catch (UnavailableException e){
+            throw new CustomUnavailableException("[getRandomCitizenFallback] Could not perform a query. " + e);
+        } catch (NoHostAvailableException e) {
+            throw new CustomNoHostUnavailableException("[getRandomCitizenFallback] Could not perform a query. " + e);
         }
         return null;
     }
@@ -215,42 +278,6 @@ public class BackendSession {
             throw new BackendException("[deleteCitizen] Could not perform a query. " + e.getMessage() + ".", e);
         }
     }
-
-    // public Candidate getRandomCandidate(VotingType votingType, Integer areaID) throws BackendException {
-
-    //     BoundStatement bs = null;
-
-    //     if (votingType == VotingType.PARLIAMENT) {
-    //         bs = new BoundStatement(GET_CANDIDATES_PARLIAMENT);
-    //     } else {
-    //         bs = new BoundStatement(GET_CANDIDATES_SENATE);
-    //     }
-
-    //     ResultSet rs = null;
-    //     try {
-    //         bs.bind(areaID);
-    //         rs = session.execute(bs);
-    //         List<Row> rows = rs.all();
-
-    //         if (!rows.isEmpty()) {
-    //             Random random = new Random();
-    //             int candidateIndex = random.nextInt(rows.size());
-    //             Row randomCandidateRow = rows.get(candidateIndex);
-
-    //             UUID candidateID = randomCandidateRow.getUUID("idkandydata");
-    //             Integer CandidateAreaID = randomCandidateRow.getInt("okreg");
-    //             String candidateName = randomCandidateRow.getString("imie");
-    //             String candidateSurname = randomCandidateRow.getString("nazwisko");
-
-    //             Candidate randomCandidate = new Candidate(candidateName, candidateSurname);
-    //             randomCandidate.setCandidateId(candidateID);
-    //             randomCandidate.setAreaId(CandidateAreaID);
-
-    //             return randomCandidate;
-    //         } else {
-    //             System.out.println("[getRandomCandidate] rows are empty!");
-    //         }
-    //     } catch (  return nl
     
     public Candidate getRandomGaussianCandidate(VotingType votingType, Integer areaID) throws BackendException, InterruptedException, CustomUnavailableException, CustomNoHostUnavailableException {
         BoundStatement bs = null;
@@ -292,34 +319,34 @@ public class BackendSession {
             } else {
                 System.out.println("[getRandomGaussianCandidate] rows are empty!");
             }
-        } catch (UnavailableException e1){
+        } catch (NoHostAvailableException e1){
             for (int i = 0;i < RETRY_NUMBER; i++) {
                 Thread.sleep(RETRY_INTERVAL);
                 //call f2
                 try {
                      getRandomCandidateFallback(votingType, areaID);
-                } catch (UnavailableException e2) {
+                } catch (CustomNoHostUnavailableException e2) {
                     // przykladowo, po 2 probach
                     if(i == 2){
                         return getRandomCandidateFallback(votingType, areaID, ConsistencyLevel.ONE);
                     }
                 }
-                
             }
-            // }        } catch (NoHostAvailableException e) {
-            // pętla for co x sekund wywołaj funkcje f2
-            // try{
-                // wywołaj zapytanie przez funkcje f2
-                // wyjdz z tej petli jak wszystko ok
-            // }
-            // catch(myException){
-                // przejdz do nastepnej iteracji tej petli
-                // jesli iteracja wynosi x to wywołaj f2 z consistency level ONE
-            // }
             return null;
-            // throw new BackendException("[getRandomCandidate] Could not perform a query. " + e.getMessage() + ".", e);
-        }catch (Exception e) {
-            throw new BackendException("[getRandomGaussianCandidate] Could not perform a query. " + e.getMessage() + ".", e);
+        }catch (UnavailableException e1){
+            for (int i = 0;i < RETRY_NUMBER; i++) {
+                Thread.sleep(RETRY_INTERVAL);
+                //call f2
+                try {
+                     getRandomCandidateFallback(votingType, areaID);
+                } catch (CustomUnavailableException e2) {
+                    // przykladowo, po 2 probach
+                    if(i == 2){
+                        return getRandomCandidateFallback(votingType, areaID, ConsistencyLevel.ONE);
+                    }
+                }
+            }
+            return null;
         }
         return null;
     }
