@@ -19,6 +19,15 @@ public class AreaThread implements Runnable {
                 backendSession.voting();
             } catch (BackendException e) {
                 e.printStackTrace();
+            } catch (InterruptedException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } catch (CustomUnavailableException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } catch (CustomNoHostUnavailableException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
             }
 
             try {

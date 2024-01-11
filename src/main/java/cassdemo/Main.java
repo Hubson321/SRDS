@@ -29,18 +29,18 @@ public class Main {
         // -----------------------------------------------------------------------------
 		// przed prawidłowym skryptem na początku uruchomić tylko meotdy z setupSession,
         // potem zakomentowac
-        SetupSession setupSession = new SetupSession(contactPoint, keyspace);
-        setupSession.prepareStatements();
-        setupSession.setupCandidatesAndCitizens();
+        // SetupSession setupSession = new SetupSession(contactPoint, keyspace);
+        // setupSession.prepareStatements();
+        // setupSession.setupCandidatesAndCitizens();
         // -----------------------------------------------------------------------------
 
         BackendSession session = new BackendSession(contactPoint, keyspace);
 
-		int numAreas = 5;
+		int numAreas = 1;
 		AreaThread[] areas = new AreaThread[numAreas];
 		DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
 
-        LocalDateTime maxDateTime = LocalDateTime.parse("20-01-2024 15:00:00", inputFormatter); // do manipulacji daty konca glosowania (dzien-miesiac-rok godzina-minuta-sekunda)
+        LocalDateTime maxDateTime = LocalDateTime.parse("20-01-2024 16:15:00", inputFormatter); // do manipulacji daty konca glosowania (dzien-miesiac-rok godzina-minuta-sekunda)
         System.out.println("----------------------------------------------------------");
         System.out.println("Poczatek glosowania");
         System.out.println("----------------------------------------------------------");

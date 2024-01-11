@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.IntStream;
 
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.Cluster;
@@ -20,6 +21,7 @@ import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.exceptions.UnavailableException;
+
 
 /*
  * For error handling done right see:
@@ -39,8 +41,10 @@ public class BackendSession {
     private Session session;
     private static final String USER_FORMAT = "- %-10s  %-16s %-10s %-10s\n";
     private List<Candidate> candidateFinalResult = new ArrayList<Candidate>();
+
     private static Integer RETRY_NUMBER = 3;
     private static Integer RETRY_INTERVAL = 60000;
+
     public BackendSession(String contactPoint, String keyspace) throws BackendException {
 
         Cluster cluster = Cluster.builder().addContactPoint(contactPoint)
@@ -48,6 +52,7 @@ public class BackendSession {
             .withQueryOptions(new QueryOptions()
             .setConsistencyLevel(ConsistencyLevel.QUORUM))
             .build();
+            
         try {
             session = cluster.connect(keyspace);
         } catch (Exception e) {
@@ -134,8 +139,7 @@ public class BackendSession {
 
         logger.info("Statements prepared");
     }
-
-    //        TODO: invoke this function after election has ended
+    
     public void displayFinalResults() throws BackendException {
         System.out.println("Wyniki do Sejmu: \n");
         prepareResults(GET_CANDIDATES_PARLIAMENT);
@@ -171,11 +175,15 @@ public class BackendSession {
     }
 
     public Citizen getRandomCitizen() throws BackendException {
+        return getRandomCitizen(ConsistencyLevel.QUORUM);
+    }
+
+    public Citizen getRandomCitizen(ConsistencyLevel consistencyLevel) throws BackendException {
         // do sprawdzenia przy wiekszej liczbie obywateli, czy bedzie koniecznosc (?)
         Random random = new Random();
         int randomArea = random.nextInt(50) + 1;
         BoundStatement bs = new BoundStatement(GET_CITIZEN_CONSTITUENCY);
-        bs.bind(randomArea);
+        bs.bind(randomArea).setConsistencyLevel(consistencyLevel);
         ResultSet rs = null;
         try {
             rs = session.execute(bs);
@@ -198,7 +206,10 @@ public class BackendSession {
             } else {
                 System.out.println("[getRandomCitizen] rows are empty!");
             }
-        } catch (Exception e) {
+        } catch(NoHostAvailableException e) {
+            return getRandomCitizen(ConsistencyLevel.ONE);
+        } 
+        catch (Exception e) {
             throw new BackendException("[getRandomCitizen] Could not perform a query. " + e.getMessage() + ".", e);
         }
         return null;
@@ -216,43 +227,66 @@ public class BackendSession {
         }
     }
 
-    // public Candidate getRandomCandidate(VotingType votingType, Integer areaID) throws BackendException {
 
-    //     BoundStatement bs = null;
+//to jest 
+    public Candidate getRandomCandidate(VotingType votingType, Integer areaID) throws BackendException {
 
-    //     if (votingType == VotingType.PARLIAMENT) {
-    //         bs = new BoundStatement(GET_CANDIDATES_PARLIAMENT);
-    //     } else {
-    //         bs = new BoundStatement(GET_CANDIDATES_SENATE);
-    //     }
+        BoundStatement bs = null;
 
-    //     ResultSet rs = null;
-    //     try {
-    //         bs.bind(areaID);
-    //         rs = session.execute(bs);
-    //         List<Row> rows = rs.all();
+        if (votingType == VotingType.PARLIAMENT) {
+            bs = new BoundStatement(GET_CANDIDATES_PARLIAMENT);
+        } else {
+            bs = new BoundStatement(GET_CANDIDATES_SENATE);
+        }
 
-    //         if (!rows.isEmpty()) {
-    //             Random random = new Random();
-    //             int candidateIndex = random.nextInt(rows.size());
-    //             Row randomCandidateRow = rows.get(candidateIndex);
+        ResultSet rs = null;
+        try {
+            bs.bind(areaID);
+            rs = session.execute(bs);
+            List<Row> rows = rs.all();
 
-    //             UUID candidateID = randomCandidateRow.getUUID("idkandydata");
-    //             Integer CandidateAreaID = randomCandidateRow.getInt("okreg");
-    //             String candidateName = randomCandidateRow.getString("imie");
-    //             String candidateSurname = randomCandidateRow.getString("nazwisko");
+            if (!rows.isEmpty()) {
+                Random random = new Random();
+                int candidateIndex = random.nextInt(rows.size());
+                Row randomCandidateRow = rows.get(candidateIndex);
 
-    //             Candidate randomCandidate = new Candidate(candidateName, candidateSurname);
-    //             randomCandidate.setCandidateId(candidateID);
-    //             randomCandidate.setAreaId(CandidateAreaID);
+                UUID candidateID = randomCandidateRow.getUUID("idkandydata");
+                Integer CandidateAreaID = randomCandidateRow.getInt("okreg");
+                String candidateName = randomCandidateRow.getString("imie");
+                String candidateSurname = randomCandidateRow.getString("nazwisko");
 
-    //             return randomCandidate;
-    //         } else {
-    //             System.out.println("[getRandomCandidate] rows are empty!");
-    //         }
-    //     } catch (  return nl
-    
-    public Candidate getRandomGaussianCandidate(VotingType votingType, Integer areaID) throws BackendException, InterruptedException, CustomUnavailableException, CustomNoHostUnavailableException {
+                Candidate randomCandidate = new Candidate(candidateName, candidateSurname);
+                randomCandidate.setCandidateId(candidateID);
+                randomCandidate.setAreaId(CandidateAreaID);
+
+                return randomCandidate;
+            } else {
+                System.out.println("[getRandomCandidate] rows are empty!");
+            }
+        } catch (Exception e) {
+            throw new BackendException("[getRandomCandidate] Could not perform a query. " + e.getMessage() + ".", e);
+        }
+        return null;
+    }
+
+    public Candidate getRandomGaussianCandidate(VotingType votingType, Integer areaID) throws BackendException { // f1
+        try {
+            getRandomGaussianCandidate(votingType, areaID, ConsistencyLevel.QUORUM);
+        } 
+        catch (UnavailableException e){
+            if () {
+                getRandomGaussianCandidate(votingType, areaID, ConsistencyLevel.ONE);
+            }
+        }
+
+        catch(NoHostAvailableException e){
+        
+        }
+
+    }
+
+
+    public Candidate getRandomGaussianCandidate(VotingType votingType, Integer areaID, ConsistencyLevel consistencyLevel) throws BackendException { // f2 -> execute -> OwnException
         BoundStatement bs = null;
         int candidateIndex = 1;
         if (votingType == VotingType.PARLIAMENT) {
@@ -292,95 +326,38 @@ public class BackendSession {
             } else {
                 System.out.println("[getRandomGaussianCandidate] rows are empty!");
             }
-        } catch (UnavailableException e1){
-            for (int i = 0;i < RETRY_NUMBER; i++) {
-                Thread.sleep(RETRY_INTERVAL);
-                //call f2
-                try {
-                     getRandomCandidateFallback(votingType, areaID);
-                } catch (UnavailableException e2) {
-                    // przykladowo, po 2 probach
-                    if(i == 2){
-                        return getRandomCandidateFallback(votingType, areaID, ConsistencyLevel.ONE);
-                    }
-                }
-                
-            }
-            // }        } catch (NoHostAvailableException e) {
-            // pętla for co x sekund wywołaj funkcje f2
-            // try{
-                // wywołaj zapytanie przez funkcje f2
-                // wyjdz z tej petli jak wszystko ok
+        
+        }catch (UnavailableException e){
+            return getRandomGaussianCandidate(votingType, areaID, ConsistencyLevel.ONE);
+        } catch(NoHostAvailableException e){
+            //  IntStream.rangeClosed(0, RETRY_NUMBER).forEach(value -> {
+            //         try {
+            //             Thread.sleep(RETRY_INTERVAL);
+            //         } catch (InterruptedException e1) {
+            //             e1.printStackTrace();
+            //         }
+            //         System.out.println("[UnavailableException] ponowna próba wstawienia");
+            //         try {
+            //             getRandomGaussianCandidate(votingType, areaID);
+            //         } catch (BackendException e1) {
+            //             e1.printStackTrace();
+            //         }
+            //     }); 
+            // if(consistencyLevel != ConsistencyLevel.ONE) {
+            //     return getRandomGaussianCandidate(votingType, areaID,ConsistencyLevel.ONE);
             // }
-            // catch(myException){
-                // przejdz do nastepnej iteracji tej petli
-                // jesli iteracja wynosi x to wywołaj f2 z consistency level ONE
-            // }
-            return null;
-            // throw new BackendException("[getRandomCandidate] Could not perform a query. " + e.getMessage() + ".", e);
-        }catch (Exception e) {
+
+        } catch (Exception e) {
             throw new BackendException("[getRandomGaussianCandidate] Could not perform a query. " + e.getMessage() + ".", e);
         }
         return null;
     }
+    
 
-    private Candidate getRandomCandidateFallback(VotingType type, Integer areaID) throws CustomNoHostUnavailableException, CustomUnavailableException {
-        return getRandomCandidateFallback(type, areaID, ConsistencyLevel.QUORUM);
-    }
 
-    private Candidate getRandomCandidateFallback(VotingType votingType, Integer areaID, ConsistencyLevel consistencyLevel) throws CustomUnavailableException, CustomNoHostUnavailableException {
-        BoundStatement bs = null;
-        int candidateIndex = 1;
-        if (votingType == VotingType.PARLIAMENT) {
-            bs = new BoundStatement(GET_CANDIDATES_PARLIAMENT);
-        } else {
-            bs = new BoundStatement(GET_CANDIDATES_SENATE);
-        }
-        ResultSet rs = null;
-        try {
-            bs.bind(areaID).setConsistencyLevel(consistencyLevel);
-            rs = session.execute(bs);
-            List<Row> rows = rs.all();
+    
 
-            if (!rows.isEmpty()) {
-                // ID w oparciu o wszystkich z danego okregu
-                // wartosci generowane wykorzystujac rozklad normalny
-                // 20 kandydatow w jednym okregu do sejmu, 10 do senatu
-                if (votingType == VotingType.PARLIAMENT) {
-                    candidateIndex = getGaussianRandomNumber(1, 20);
-                } else {
-                    candidateIndex = getGaussianRandomNumber(1, 10);
-                }
 
-                Row randomCandidateRow = rows.get(candidateIndex - 1);
-
-                UUID candidateID = randomCandidateRow.getUUID("idkandydata");
-                Integer CandidateAreaID = randomCandidateRow.getInt("okreg");
-                String candidateName = randomCandidateRow.getString("imie");
-                String candidateSurname = randomCandidateRow.getString("nazwisko");
-
-                Candidate randomCandidate = new Candidate(candidateName, candidateSurname);
-                randomCandidate.setCandidateId(candidateID);
-                randomCandidate.setAreaId(CandidateAreaID);
-
-                return randomCandidate;
-            }
-        } catch (UnavailableException e){
-            throw new CustomUnavailableException("[getRandomGaussianCandidate] Could not perform a query. " + e);
-        } catch (NoHostAvailableException e) {
-            throw new CustomNoHostUnavailableException("[getRandomGaussianCandidate] Could not perform a query. " + e);
-        }
-        return null;
-    }
-
-     // funckja f2
-    // dostaje dane kandydata oraz consistency level - by default QUORUM
-    // try{
-        // wykonaj zapytyanie do bazy ponownie z gotowymi danymi
-    // }
-    // catch(Unavailable || NoHost){
-        // throw myException()
-    // }public Long getCandidateVotes(Candidate candidate, VotingType votingType) throws BackendException {
     public Long getCandidateVotes(Candidate candidate, VotingType votingType) throws BackendException {
         BoundStatement bs = null;
         Long candidateVotes = 0l;
@@ -404,7 +381,7 @@ public class BackendSession {
         return candidateVotes;
     }
 
-    public void voteParliament(Citizen citizen) throws BackendException, InterruptedException, CustomUnavailableException, CustomNoHostUnavailableException {
+    public void voteParliament(Citizen citizen) throws BackendException {
         Candidate candidate = null;
 
         // oddanie w 99% glosu w poprawnym okregu wyborczym przeznaczonym dla obywatela
@@ -431,21 +408,39 @@ public class BackendSession {
             }
         }
         
-        BoundStatement bs = new BoundStatement(UPDATE_CANDIDATE_PARLIAMENT);
+        try {
+            voteForParlimentCandidate(candidate, citizen);
+        }
+        catch (Exception e) { //TODO: Wyjatek pochodzacy z Cassandry, gdy glosowanie do sejmu sie nie powiedzie
+            //if (blabla) { 
+                voteForParlimentCandidate(candidate, citizen);
+            //}
+        }
         
+        // if (candidate.getCandidateId() != null) {
+        //     BoundStatement updateCitizenVote = new BoundStatement(UPDATE_CITIZEN_PARLIAMENT);
+        //     updateCitizenVote.bind(true, citizen.getAreaId(), citizen.getCitizenId());
+        //     BoundStatement updateParliamentCandidate = new BoundStatement(UPDATE_CANDIDATE_PARLIAMENT);
+        //     updateParliamentCandidate.bind(
+        //             candidate.getCandidateId(),
+        //             candidate.getAreaId(),
+        //             candidate.getName(),
+        //             candidate.getSurname()
+        //     );
+        //     try {
+        //         session.execute(updateCitizenVote);
+        //         session.execute(updateParliamentCandidate);
+        //     } catch (Exception e) {
+        //         throw new BackendException("[voteParliament] Could not perform a query. " + e.getMessage() + ".", e);
+        //     }
+        // }
+    }
 
-        bs.bind(candidate.getCandidateId(),
-                candidate.getAreaId(),
-                candidate.getName(),
-                candidate.getSurname()
-        );
+    public void voteForParlimentCandidate(Candidate candidate, Citizen citizen) throws BackendException {
+        voteForParlimentCandidate(candidate, citizen, ConsistencyLevel.QUORUM);
+    }
 
-        // System.out.println("----------------------voteParliament----------------------");
-        // System.out.println("candidateID: " + candidate.getCandidateId());
-        // System.out.println("citizenID: " + citizen.getCitizenId());
-        // System.out.println("areaID: " + candidate.getAreaId());
-        // System.out.println("----------------------------------------------------------");
-
+    public void voteForParlimentCandidate(Candidate candidate, Citizen citizen, ConsistencyLevel consistencyLevel) throws BackendException {
         if (candidate.getCandidateId() != null) {
             BoundStatement updateCitizenVote = new BoundStatement(UPDATE_CITIZEN_PARLIAMENT);
             updateCitizenVote.bind(true, citizen.getAreaId(), citizen.getCitizenId());
@@ -455,17 +450,50 @@ public class BackendSession {
                     candidate.getAreaId(),
                     candidate.getName(),
                     candidate.getSurname()
-            );
+            ).setConsistencyLevel(consistencyLevel);
             try {
                 session.execute(updateCitizenVote);
                 session.execute(updateParliamentCandidate);
-            } catch (Exception e) {
+                return;
+            } catch(NoHostAvailableException e) {
+                IntStream.rangeClosed(0, RETRY_NUMBER).forEach(value -> {
+                    try {
+                        Thread.sleep(RETRY_INTERVAL);
+                    } catch (InterruptedException e1) {
+                        e1.printStackTrace();
+                    }
+                    System.out.println("[NoHostAvailableException] ponowna próba wstawienia");
+                    try {
+                        voteForParlimentCandidate(candidate, citizen);
+                    } catch (BackendException e1) {
+                        e1.printStackTrace();
+                    }
+                });
+            }
+            catch (UnavailableException e) {
+               IntStream.rangeClosed(0, RETRY_NUMBER).forEach(value -> {
+                    try {
+                        Thread.sleep(RETRY_INTERVAL);
+                    } catch (InterruptedException e1) {
+                        e1.printStackTrace();
+                    }
+                    System.out.println("[UnavailableException] ponowna próba wstawienia");
+                    try {
+                        voteForParlimentCandidate(candidate, citizen);
+                    } catch (BackendException e1) {
+                        e1.printStackTrace();
+                    }
+                });
+                voteForParlimentCandidate(candidate, citizen, ConsistencyLevel.ONE);
+            }
+            catch (Exception e) { //TU trzeba inny bo złapie wszystkie
                 throw new BackendException("[voteParliament] Could not perform a query. " + e.getMessage() + ".", e);
             }
+            
         }
     }
 
-    public void voteSenate(Citizen citizen) throws BackendException, InterruptedException, CustomUnavailableException, CustomNoHostUnavailableException {
+    public void voteSenate(Citizen citizen) throws BackendException {
         Candidate candidate = null;
 
         // oddanie w 99% glosu w poprawnym okregu wyborczym przeznaczonym dla obywatela
@@ -492,21 +520,34 @@ public class BackendSession {
             }
         }
 
-        BoundStatement bs = new BoundStatement(UPDATE_CANDIDATE_SENATE);
-
-        bs.bind(candidate.getCandidateId(),
-                candidate.getAreaId(),
-                candidate.getName(),
-                candidate.getSurname()
-        );
-
-        // System.out.println("------------------------voteSenate------------------------");
-        // System.out.println("candidateID: " + candidate.getCandidateId());
-        // System.out.println("citizenID: " + citizen.getCitizenId());
-        // System.out.println("areaID: " + candidate.getAreaId());
-        // System.out.println("----------------------------------------------------------");
-
+        // if (candidate.getCandidateId() != null) {
+        //     BoundStatement updateCitizenVote = new BoundStatement(UPDATE_CITIZEN_SENATE);
+        //     updateCitizenVote.bind(true, citizen.getAreaId(), citizen.getCitizenId());
+        //     BoundStatement updateParliamentCandidate = new BoundStatement(UPDATE_CANDIDATE_SENATE);
+        //     updateParliamentCandidate.bind(
+        //             candidate.getCandidateId(),
+        //             candidate.getAreaId(),
+        //             candidate.getName(),
+        //             candidate.getSurname()
+        //     );
+        //     try {
+        //         session.execute(updateCitizenVote);
+        //         session.execute(updateParliamentCandidate);
+        //     } catch (Exception e) {
+        //         throw new BackendException("[voteSenate] Could not perform a query. " + e.getMessage() + ".", e);
+        //     }
+        // }
+        try {
+            voteForSenateCandidate(candidate, citizen);
+        }
+        catch (Exception e) { //TODO: Wyjatek pochodzacy z Cassandry, gdy glosowanie do sejmu sie nie powiedzie
+            //if (blabla) { 
+                voteForSenateCandidate(candidate, citizen);
+            //}
+        }
         
+    }
+    public void voteForSenateCandidate(Candidate candidate, Citizen citizen) throws BackendException {
         if (candidate.getCandidateId() != null) {
             BoundStatement updateCitizenVote = new BoundStatement(UPDATE_CITIZEN_SENATE);
             updateCitizenVote.bind(true, citizen.getAreaId(), citizen.getCitizenId());
@@ -526,9 +567,18 @@ public class BackendSession {
         }
     }
 
-    public void voting() throws BackendException, InterruptedException, CustomUnavailableException, CustomNoHostUnavailableException {
+    public void voting() throws BackendException {
 
         Citizen citizen = getRandomCitizen();
+
+        //TODO
+        // try {
+        //     voteParliament
+        //     voteSenate
+        // }
+        // catch() {}
+        // finally{delete} 
+        //TODO
 
         if (!citizen.getVoiceToParliament()) {
             voteParliament(citizen);
@@ -551,6 +601,7 @@ public class BackendSession {
             } catch (Exception e) {
                 throw new BackendException("[voteSenate] Could not posible to delete citizen. " + e.getMessage() + ".", e);
             }
+            
         }
     }
 

@@ -26,7 +26,7 @@ public class SetupSession {
     private static PreparedStatement INSERT_CANDIDATE_SENATE;
     private Session session;
     private Integer ALL_CITIZENS = 100000; // Initial number of citizens
-    private Integer CITIZENS_IN_AREA = 2000; // Initial ALL_CITIZENS / CITIZENS_IN_AREA => 50 voting_areas
+    private Integer CITIZENS_IN_AREA = 2000; // Initial ALL_CITIZENS / CITIZENS_IN_AREA => 50 voting_areas 
 
     public SetupSession(String contactPoint, String keyspace) throws BackendException {
 
@@ -42,8 +42,8 @@ public class SetupSession {
             .setConsistencyLevel(ConsistencyLevel.QUORUM))
             .build();
         //TODO
-        
-        try {
+
+        try {   
             session = cluster.connect(keyspace);
         } catch (Exception e) {
             throw new BackendException("Could not connect to the cluster. " + e.getMessage() + ".", e);
