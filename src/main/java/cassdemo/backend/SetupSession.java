@@ -76,7 +76,7 @@ public class SetupSession {
 
     private void prepareCitizenSetup() {
         Integer areaNum = 1;
-        for (int i = 1; i <= ALL_CITIZENS; i++) {
+        for (int i = 1; i <= GeneralNumbers.ALL_CITIZENS; i++) {
             UUID userId = UUID.randomUUID();
             try {
                 insertCitizen(userId, areaNum);
@@ -87,10 +87,12 @@ public class SetupSession {
             // jeden z 50 okregów wyborczych
             // 28 mln / 50 = 560000 - tylu obywateli per okręg, tymczasowo mln glosujących
             // ALL_CITIZENS / 50 = CITIZENS_IN_AREA
-            if( i % CITIZENS_IN_AREA == 0){
+            if( i % GeneralNumbers.CITIZENS_IN_AREA == 0){
                 areaNum += 1;
             }
         }
+        logger.info("Citizens prepared");
+
     }
 
     private void prepareCandidateSetup() {
@@ -112,6 +114,8 @@ public class SetupSession {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        logger.info("Candidates prepared");
     }
 
     private void prepareCandidatesList(List<Candidate> candidates, Boolean ifParliament) {

@@ -7,7 +7,7 @@ import org.codehaus.jackson.type.TypeReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
+import java.time.Instant;
 import java.util.*;
 
 import com.datastax.driver.core.BoundStatement;
@@ -73,6 +73,9 @@ public class BackendSession {
     private static PreparedStatement GET_CANDIDATES_SENATE;
     private static PreparedStatement GET_CANDIDATE_PARLIAMENT_VOTES;
     private static PreparedStatement GET_CANDIDATE_SENATE_VOTES;
+    private static PreparedStatement SAVE_FREQUENCY;
+    private static PreparedStatement GET_FREQUENCY;
+    private static PreparedStatement GET_CITIZENS_LEFT;
 
     // private static final SimpleDateFormat df = new
     // SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -127,6 +130,9 @@ public class BackendSession {
 
             UPDATE_CANDIDATE_SENATE = session.prepare("UPDATE SenatWyniki SET votes = votes + 1 WHERE idKandydata = ? AND okreg = ? " +
                     "AND imie = ? AND nazwisko = ?");
+            SAVE_FREQUENCY = session.prepare("INSERT INTO Frequency (voteTimeStamp, frequency) VALUES (?,?)");
+            GET_FREQUENCY = session.prepare("SELECT * FROM Frequency ORDER BY voteTimeStamp DESC LIMIT 1");
+            GET_CITIZENS_LEFT = session.prepare("SELECT COUNT(*) FROM UprawnieniObywatele");
 
         } catch (Exception e) {
             throw new BackendException("[prepareStatements] Could not prepare statements. " + e.getMessage() + ".", e);
@@ -142,6 +148,10 @@ public class BackendSession {
 
         System.out.println("Wyniki do Senatu: \n");
         prepareResults(GET_CANDIDATES_SENATE);
+    }
+
+    public void displayFrequency() throws BackendException {
+        getFrequency();
     }
 
 
@@ -689,7 +699,7 @@ public class BackendSession {
     }
 
     private void voteSenateFallback(Citizen citizen, Candidate candidate) throws CustomNoHostUnavailableException, CustomUnavailableException {
-        voteParliamentFallback(citizen, candidate, ConsistencyLevel.QUORUM);
+        voteSenateFallback(citizen, candidate, ConsistencyLevel.QUORUM);
     }
 
     private void voteSenateFallback(Citizen citizen, Candidate candidate, ConsistencyLevel consistencyLevel) throws CustomNoHostUnavailableException, CustomUnavailableException{
@@ -781,6 +791,53 @@ public class BackendSession {
         System.out.println("===========================================\n");
         this.candidateFinalResult.clear();
     }
+
+   public void saveFrequency() throws BackendException {
+        //Calculate frequency
+        BoundStatement getCitizensLeft = new BoundStatement(GET_CITIZENS_LEFT);
+        ResultSet rs = null;
+
+        try {
+            rs = session.execute(getCitizensLeft);
+        } catch (Exception e) {
+            throw new BackendException("Could not perform a query. " + e.getMessage() + ".", e);
+        }
+
+        Row row = rs.one();
+        long citizensLeft = row.getLong(0);
+        Integer frequency = Math.toIntExact(GeneralNumbers.ALL_CITIZENS - citizensLeft);
+
+
+        //Save frequency
+       BoundStatement saveFrequencyStatement = new BoundStatement(SAVE_FREQUENCY);
+       saveFrequencyStatement.bind(Instant.now(), frequency);
+
+        try {
+            rs = session.execute(saveFrequencyStatement);
+        } catch (Exception e) {
+            throw new BackendException("Could not perform a query. " + e.getMessage() + ".", e);
+        }
+    }
+
+    public void getFrequency() throws BackendException {
+        BoundStatement bs = new BoundStatement(GET_FREQUENCY);
+        ResultSet rs = null;
+
+        try {
+            rs = session.execute(bs);
+        } catch (Exception e) {
+            throw new BackendException("Could not perform a query. " + e.getMessage() + ".", e);
+        }
+
+        Row row = rs.one();
+        Integer frequency = row.getInt("frequency");
+        Date date = row.getTimestamp("voteTimeStamp");
+
+        float percentFrequency = (float) (frequency / GeneralNumbers.ALL_CITIZENS);
+
+        System.out.println("Frekwencja na moment: " + date + "wynosi: " + percentFrequency);
+    }
+
 
     protected void finalize() {
         try {

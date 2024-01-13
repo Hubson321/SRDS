@@ -56,10 +56,13 @@ public class Main {
 		} catch (InterruptedException e) {
 			System.out.println("Thread Interrupted");
 		}
+
+        session.saveFrequency();
         System.out.println("----------------------------------------------------------");
 		System.out.println("Koniec glosowania");
         System.out.println("----------------------------------------------------------");
         session.displayFinalResults();
+        session.displayFrequency();;
         System.exit(0);
     }
 
