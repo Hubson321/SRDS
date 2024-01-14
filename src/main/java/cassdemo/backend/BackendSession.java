@@ -2,13 +2,14 @@ package cassdemo.backend;
 
 import cassdemo.ObjectsModel.Candidate;
 import cassdemo.ObjectsModel.Citizen;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.type.TypeReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.Cluster;
@@ -130,9 +131,9 @@ public class BackendSession {
 
             UPDATE_CANDIDATE_SENATE = session.prepare("UPDATE SenatWyniki SET votes = votes + 1 WHERE idKandydata = ? AND okreg = ? " +
                     "AND imie = ? AND nazwisko = ?");
-            SAVE_FREQUENCY = session.prepare("INSERT INTO Frequency (voteTimeStamp, frequency) VALUES (?,?)");
-            GET_FREQUENCY = session.prepare("SELECT * FROM Frequency ORDER BY voteTimeStamp DESC LIMIT 1");
-            GET_CITIZENS_LEFT = session.prepare("SELECT COUNT(*) FROM UprawnieniObywatele");
+            SAVE_FREQUENCY = session.prepare("INSERT INTO Frequency (voteTimeStamp, frequency) VALUES (?,?);");
+            GET_FREQUENCY = session.prepare("SELECT * FROM Frequency;");
+            GET_CITIZENS_LEFT = session.prepare("SELECT COUNT(*) FROM UprawnieniObywatele;");
 
         } catch (Exception e) {
             throw new BackendException("[prepareStatements] Could not prepare statements. " + e.getMessage() + ".", e);
@@ -805,12 +806,12 @@ public class BackendSession {
 
         Row row = rs.one();
         long citizensLeft = row.getLong(0);
-        Integer frequency = Math.toIntExact(GeneralNumbers.ALL_CITIZENS - citizensLeft);
 
+        Integer frequency = Math.toIntExact(GeneralNumbers.ALL_CITIZENS - citizensLeft);
 
         //Save frequency
        BoundStatement saveFrequencyStatement = new BoundStatement(SAVE_FREQUENCY);
-       saveFrequencyStatement.bind(Instant.now(), frequency);
+       saveFrequencyStatement.bind(Date.from(Instant.now()), frequency);
 
         try {
             rs = session.execute(saveFrequencyStatement);
@@ -828,14 +829,25 @@ public class BackendSession {
         } catch (Exception e) {
             throw new BackendException("Could not perform a query. " + e.getMessage() + ".", e);
         }
+        Stream<Row> rowStream = StreamSupport.stream(rs.spliterator(), false);
 
-        Row row = rs.one();
-        Integer frequency = row.getInt("frequency");
-        Date date = row.getTimestamp("voteTimeStamp");
+        List<Result> resultList = rowStream
+                .map(row -> {
+                    Instant voteTimeStamp = row.getTimestamp("voteTimeStamp").toInstant();
+                    int frequency = row.getInt("frequency");
+                    return new Result(voteTimeStamp, frequency);
+                })
+                .sorted(Comparator.comparing(Result::getVoteTimeStamp).reversed())
+                .collect(Collectors.toList());
 
-        float percentFrequency = (float) (frequency / GeneralNumbers.ALL_CITIZENS);
+        Result newestResult = resultList.isEmpty() ? null : resultList.get(0);
 
-        System.out.println("Frekwencja na moment: " + date + "wynosi: " + percentFrequency);
+        if (newestResult != null) {
+            System.out.println("Frekwencja na: " + newestResult.getVoteTimeStamp() +
+                    " wynosi: " + Math.round(((float) newestResult.getFrequency() / GeneralNumbers.ALL_CITIZENS) * 100) + "%");
+        } else {
+            System.out.println("Brak danych.");
+        }
     }
 
 
@@ -846,6 +858,24 @@ public class BackendSession {
             }
         } catch (Exception e) {
             logger.error("Could not close existing cluster", e);
+        }
+    }
+
+    static class Result {
+        private final Instant voteTimeStamp;
+        private final int frequency;
+
+        Result(Instant voteTimeStamp, int frequency) {
+            this.voteTimeStamp = voteTimeStamp;
+            this.frequency = frequency;
+        }
+
+        public Instant getVoteTimeStamp() {
+            return voteTimeStamp;
+        }
+
+        public int getFrequency() {
+            return frequency;
         }
     }
 }
