@@ -29,19 +29,12 @@ public class SetupSession {
     private Integer CITIZENS_IN_AREA = 2000; // Initial ALL_CITIZENS / CITIZENS_IN_AREA => 50 voting_areas
 
     public SetupSession(String contactPoint, String keyspace) throws BackendException {
-
-        //TODO
-        //TODO: Sprawdzic zachowanie przy trybach: ONE, QUORUM -> OBOWIAZUJE NA ODCZYTY I ZAPISY JEDNOCZESNIE!
-        //TODO: Default to: LOCAL_ONE - odwolanie do jednego wezla (w lokalnej partycji)
-        //TODO
-        
         // Cluster cluster = Cluster.builder().addContactPoint(contactPoint).build(); // default Consistency - LOCAL_ONE
         Cluster cluster = Cluster.builder()
             .addContactPoint(contactPoint)
             .withQueryOptions(new QueryOptions()
             .setConsistencyLevel(ConsistencyLevel.QUORUM))
             .build();
-        //TODO
         
         try {
             session = cluster.connect(keyspace);

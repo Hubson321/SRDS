@@ -23,21 +23,12 @@ public class AreaThread implements Runnable {
             } catch (InterruptedException e) {
                 System.out.println("[NoHostAvailable] - starting new voting");
                 run();
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             } catch (CustomUnavailableException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             } catch (CustomNoHostUnavailableException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
-
-            // try {
-            //     Thread.sleep(500); // 500 milisekund oczekiwania
-            // } catch (InterruptedException e) {
-            //     System.out.println(Thread.currentThread().getName() + " interrupted");
-            // }
         }
     }
 }

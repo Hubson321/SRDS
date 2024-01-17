@@ -40,11 +40,11 @@ public class Main {
         BackendSession session = new BackendSession(contactPoints, keyspace);
        
         
-		int numAreas = 1;
+		int numAreas = 10;
 		AreaThread[] areas = new AreaThread[numAreas];
 		DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
 
-        LocalDateTime maxDateTime = LocalDateTime.parse("16-01-2024 23:57:00", inputFormatter); // do manipulacji daty konca glosowania (dzien-miesiac-rok godzina-minuta-sekunda)
+        LocalDateTime maxDateTime = LocalDateTime.parse("17-01-2024 11:58:00", inputFormatter); // do manipulacji daty konca glosowania (dzien-miesiac-rok godzina-minuta-sekunda)
         System.out.println("----------------------------------------------------------");
         System.out.println("Poczatek glosowania");
         System.out.println("----------------------------------------------------------");

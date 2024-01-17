@@ -22,6 +22,7 @@ import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.exceptions.TransportException;
 import com.datastax.driver.core.exceptions.UnavailableException;
+import com.datastax.driver.core.policies.RetryPolicy;
 
 /*
  * For error handling done right see:
@@ -45,8 +46,11 @@ public class BackendSession {
     private static Integer RETRY_INTERVAL = 5000;
     public BackendSession(String[] contactPoints, String keyspace) throws BackendException {
 
+        CustomRetryPolicy rc = new CustomRetryPolicy();
+        
         Cluster cluster = Cluster.builder()
             .addContactPoints(contactPoints)
+            .withRetryPolicy(rc)
             .withQueryOptions(new QueryOptions()
             .setConsistencyLevel(ConsistencyLevel.QUORUM))
             .build();
@@ -143,7 +147,6 @@ public class BackendSession {
         logger.info("Statements prepared");
     }
 
-    //        TODO: invoke this function after election has ended
     public void displayFinalResults() throws BackendException {
         System.out.println("Wyniki do Sejmu: \n");
         prepareResults(GET_CANDIDATES_PARLIAMENT);
@@ -313,11 +316,6 @@ public class BackendSession {
                         Thread.currentThread().run();
                     }
                 }
-                // NoHostAvailableException: This exception is thrown when the driver cannot connect to any of the specified hosts during the initial connection attempt. It may indicate that none of the provided contact points are reachable.
-
-                // AllNodesFailedException: This exception is a subclass of NoHostAvailableException and is thrown when the driver exhaustively tries to connect to all provided contact points but fails to connect to any of them.
-
-                // UnavailableException: This exception is typically thrown during query execution when the requested consistency level cannot be achieved because the required number of replicas are not available. It may indicate temporary unavailability of some nodes.
             }
             return null;
         }
@@ -600,7 +598,7 @@ public class BackendSession {
                 try {
                     session.execute(updateCitizenVote);
                     session.execute(updateParliamentCandidate);
-                } catch (UnavailableException  | NoHostAvailableException e1){
+                } catch (UnavailableException | NoHostAvailableException e1){
                     for (int i = 0;i < RETRY_NUMBER; i++) {
                         try {
                             Thread.sleep(RETRY_INTERVAL);
