@@ -20,6 +20,7 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import com.datastax.driver.core.exceptions.TransportException;
 import com.datastax.driver.core.exceptions.UnavailableException;
 
 /*
@@ -42,10 +43,10 @@ public class BackendSession {
     private List<Candidate> candidateFinalResult = new ArrayList<Candidate>();
     private static Integer RETRY_NUMBER = 3;
     private static Integer RETRY_INTERVAL = 5000;
-    public BackendSession(String contactPoint, String keyspace) throws BackendException {
+    public BackendSession(String[] contactPoints, String keyspace) throws BackendException {
 
-        Cluster cluster = Cluster.builder().addContactPoint(contactPoint)
-            .addContactPoint(contactPoint)
+        Cluster cluster = Cluster.builder()
+            .addContactPoints(contactPoints)
             .withQueryOptions(new QueryOptions()
             .setConsistencyLevel(ConsistencyLevel.QUORUM))
             .build();
@@ -165,24 +166,13 @@ public class BackendSession {
             bs.bind(areaID, citizenID);
             rs = session.execute(bs);
             row = rs.one();
-        } catch (NoHostAvailableException e1){
+        } catch (UnavailableException | NoHostAvailableException e1){
             for (int i = 0;i < RETRY_NUMBER; i++) {
-                Thread.sleep(RETRY_INTERVAL);
-                //call f2
                 try {
-                     getCitizenFallback(areaID, citizenID);
-                } catch (CustomNoHostUnavailableException e2) { //! Check
-                    // przykladowo, po 2 probach
-                    if(i == 2){
-                        return getCitizenFallback(areaID, citizenID, ConsistencyLevel.ONE);
-                    }
+                    Thread.sleep(RETRY_INTERVAL);
+                } catch (InterruptedException e0) {
+                    System.out.println("[getCitizen] Sleep - Thread interupted!");
                 }
-            }
-            return null;
-        }
-        catch (UnavailableException e1){
-            for (int i = 0;i < RETRY_NUMBER; i++) {
-                Thread.sleep(RETRY_INTERVAL);
                 //call f2
                 try {
                      getCitizenFallback(areaID, citizenID);
@@ -194,7 +184,27 @@ public class BackendSession {
                 }
             }
             return null;
+        } catch ( Exception e1){ //NoHostAvailableException |
+            for (int i = 0;i < RETRY_NUMBER; i++) {
+                try {
+                    Thread.sleep(RETRY_INTERVAL);
+                } catch (InterruptedException e0) {
+                    System.out.println("[getCitizen] Sleep - Thread interupted!");
+                }
+                //call f2
+                try {
+                     getCitizenFallback(areaID, citizenID);
+                } catch (CustomNoHostUnavailableException e2) { //! Check
+                    // przykladowo, po 2 probach
+                    if(i == RETRY_NUMBER - 1){
+                        // Thread.currentThread().interrupt();
+                        Thread.currentThread().run();
+                    }
+                }
+            }
+            return null;
         }
+        
         if (row != null) {
             Citizen citizen = new Citizen(citizenID, areaID);
             Boolean voiceToParliament = row.getBool("glosDoSejmu");
@@ -232,10 +242,10 @@ public class BackendSession {
     
                 return citizen;
             }
-        } catch (UnavailableException e){
-            throw new CustomUnavailableException("[getRandomGaussianCandidate] Could not perform a query. " + e);
-        } catch (NoHostAvailableException e) {
-            throw new CustomNoHostUnavailableException("[getRandomGaussianCandidate] Could not perform a query. " + e);
+        } catch (UnavailableException | NoHostAvailableException e){
+            throw new CustomUnavailableException("[getCitizenFallback] Could not perform a query. " + e);
+        } catch (Exception e) { //NoHostAvailableException
+            throw new CustomNoHostUnavailableException("[getCitizenFallback] Could not perform a query. " + e);
         }
         return null;
     }
@@ -268,25 +278,13 @@ public class BackendSession {
             } else {
                 System.out.println("[getRandomCitizen] rows are empty!");
             }
-        } catch (NoHostAvailableException e1){
+        } catch (UnavailableException | NoHostAvailableException e1){
             for (int i = 0;i < RETRY_NUMBER; i++) {
-                Thread.sleep(RETRY_INTERVAL);
-                //call f2
                 try {
-                     getRandomCitizenFallback(randomArea);
-                } catch (CustomNoHostUnavailableException e2) { //! Check
-                    // przykladowo, po 2 probach
-                    if(i == 2){
-                        return getRandomCitizenFallback(randomArea, ConsistencyLevel.ONE);
-                    }
+                    Thread.sleep(RETRY_INTERVAL);
+                } catch (InterruptedException e0) {
+                    System.out.println("[getRandomCitizen] Sleep - Thread interupted!");
                 }
-            }
-            return null;
-        }
-        catch (UnavailableException e1){
-            for (int i = 0;i < RETRY_NUMBER; i++) {
-                Thread.sleep(RETRY_INTERVAL);
-                //call f2
                 try {
                      getRandomCitizenFallback(randomArea);
                 } catch (CustomUnavailableException e2) {
@@ -297,7 +295,33 @@ public class BackendSession {
                 }
             }
             return null;
+        } catch (Exception e1){ //NoHostAvailableException | TransportException
+            for (int i = 0;i < RETRY_NUMBER; i++) {
+                try {
+                    Thread.sleep(RETRY_INTERVAL);
+                } catch (InterruptedException e0) {
+                    System.out.println("[getRandomCitizen] Sleep - Thread interupted!");
+                }
+                //call f2
+                try {
+                     getRandomCitizenFallback(randomArea);
+                } catch (CustomNoHostUnavailableException e2) { //! Check
+                    // przykladowo, po 2 probach
+                    if(i == RETRY_NUMBER - 1){
+                        System.out.println("[getRandomCitizen] Thread interupted!");
+                        //Thread.currentThread().interrupt();
+                        Thread.currentThread().run();
+                    }
+                }
+                // NoHostAvailableException: This exception is thrown when the driver cannot connect to any of the specified hosts during the initial connection attempt. It may indicate that none of the provided contact points are reachable.
+
+                // AllNodesFailedException: This exception is a subclass of NoHostAvailableException and is thrown when the driver exhaustively tries to connect to all provided contact points but fails to connect to any of them.
+
+                // UnavailableException: This exception is typically thrown during query execution when the requested consistency level cannot be achieved because the required number of replicas are not available. It may indicate temporary unavailability of some nodes.
+            }
+            return null;
         }
+        
         return null;
     }
 
@@ -329,9 +353,9 @@ public class BackendSession {
             } else {
                 System.out.println("[getRandomCitizen] rows are empty!");
             }
-        } catch (UnavailableException e){
+        } catch (UnavailableException | NoHostAvailableException e){
             throw new CustomUnavailableException("[getRandomCitizenFallback] Could not perform a query. " + e);
-        } catch (NoHostAvailableException e) {
+        } catch (Exception e) { //NoHostAvailableException| TransportException 
             throw new CustomNoHostUnavailableException("[getRandomCitizenFallback] Could not perform a query. " + e);
         }
         return null;
@@ -344,23 +368,13 @@ public class BackendSession {
 
         try {
             rs = session.execute(bs);
-        } catch (NoHostAvailableException e1){
+        } catch (UnavailableException | NoHostAvailableException e1){
             for (int i = 0;i < RETRY_NUMBER; i++) {
-                Thread.sleep(RETRY_INTERVAL);
-                //call f2
                 try {
-                     deleteCitizenFallback(areaID, citizenID);
-                } catch (CustomNoHostUnavailableException e2) { //! Check
-                    // przykladowo, po 2 probach
-                    if(i == 2){
-                        deleteCitizenFallback(areaID, citizenID, ConsistencyLevel.ONE);
-                    }
+                    Thread.sleep(RETRY_INTERVAL);
+                } catch (InterruptedException e0) {
+                    System.out.println("[deleteCitizen] Sleep - Thread interupted!");
                 }
-            }
-        }
-        catch (UnavailableException e1){
-            for (int i = 0;i < RETRY_NUMBER; i++) {
-                Thread.sleep(RETRY_INTERVAL);
                 //call f2
                 try {
                     deleteCitizenFallback(areaID, citizenID);
@@ -372,7 +386,28 @@ public class BackendSession {
                 }
             }
             return;
+        } catch (Exception e1){ //NoHostAvailableException | TransportException
+            for (int i = 0;i < RETRY_NUMBER; i++) {
+                try {
+                    Thread.sleep(RETRY_INTERVAL);
+                } catch (InterruptedException e0) {
+                    System.out.println("[deleteCitizen] Sleep - Thread interupted!");
+                }
+                //call f2
+                try {
+                    deleteCitizenFallback(areaID, citizenID);
+                } catch (CustomNoHostUnavailableException e2) {
+                    // przykladowo, po 2 probach
+                    if(i == RETRY_NUMBER - 1){
+                        System.out.println("[deleteCitizen] Thread interupted!");
+                        // Thread.currentThread().interrupt();
+                        Thread.currentThread().run();
+                    }
+                }
+            }
+            return;
         }
+        
         return;
     }
 
@@ -385,9 +420,9 @@ public class BackendSession {
         bs.bind(areaID, citizenID).setConsistencyLevel(consistencyLevel);
         try {
             session.execute(bs);
-        } catch (UnavailableException e){
+        } catch (UnavailableException | NoHostAvailableException e){
             throw new CustomUnavailableException("[deleteCitizenFallback] Could not perform a query. " + e);
-        } catch (NoHostAvailableException e) {
+        } catch (Exception e) { //NoHostAvailableException
             throw new CustomNoHostUnavailableException("[deleteCitizenFallback] Could not perform a query. " + e);
         }
         return;
@@ -433,23 +468,13 @@ public class BackendSession {
             } else {
                 System.out.println("[getRandomGaussianCandidate] rows are empty!");
             }
-        } catch (NoHostAvailableException e1){
+        } catch (UnavailableException | NoHostAvailableException  e1){
             for (int i = 0;i < RETRY_NUMBER; i++) {
-                Thread.sleep(RETRY_INTERVAL);
-                //call f2
                 try {
-                     getRandomCandidateFallback(votingType, areaID);
-                } catch (CustomNoHostUnavailableException e2) {
-                    // przykladowo, po 2 probach
-                    if(i == 2){
-                        return getRandomCandidateFallback(votingType, areaID, ConsistencyLevel.ONE);
-                    }
+                    Thread.sleep(RETRY_INTERVAL);
+                } catch (InterruptedException e0) {
+                    System.out.println("[getRandomGaussianCandidate] Sleep - Thread interupted!");
                 }
-            }
-            return null;
-        }catch (UnavailableException e1){
-            for (int i = 0;i < RETRY_NUMBER; i++) {
-                Thread.sleep(RETRY_INTERVAL);
                 //call f2
                 try {
                      getRandomCandidateFallback(votingType, areaID);
@@ -457,6 +482,27 @@ public class BackendSession {
                     // przykladowo, po 2 probach
                     if(i == 2){
                         return getRandomCandidateFallback(votingType, areaID, ConsistencyLevel.ONE);
+                    }
+                }
+            }
+            return null;
+        }
+    catch (Exception e1){ //NoHostAvailableException | TransportException
+            for (int i = 0;i < RETRY_NUMBER; i++) {
+                try {
+                    Thread.sleep(RETRY_INTERVAL);
+                } catch (InterruptedException e0) {
+                    System.out.println("[getRandomGaussianCandidate] Sleep - Thread interupted!");
+                }
+                //call f2
+                try {
+                     getRandomCandidateFallback(votingType, areaID);
+                } catch (CustomNoHostUnavailableException e2) {
+                    // przykladowo, po 2 probach
+                    if(i == RETRY_NUMBER - 1){
+                        System.out.println("[getRandomGaussianCandidate] Thread interupted!");
+                        // Thread.currentThread().interrupt();
+                        Thread.currentThread().run();
                     }
                 }
             }
@@ -506,9 +552,9 @@ public class BackendSession {
 
                 return randomCandidate;
             }
-        } catch (UnavailableException e){
+        } catch (UnavailableException | NoHostAvailableException e){
             throw new CustomUnavailableException("[getRandomGaussianCandidate] Could not perform a query. " + e);
-        } catch (NoHostAvailableException e) {
+        } catch (Exception e) { //NoHostAvailableException  | TransportException
             throw new CustomNoHostUnavailableException("[getRandomGaussianCandidate] Could not perform a query. " + e);
         }
         return null;
@@ -554,23 +600,13 @@ public class BackendSession {
                 try {
                     session.execute(updateCitizenVote);
                     session.execute(updateParliamentCandidate);
-                } catch (NoHostAvailableException e1){
+                } catch (UnavailableException  | NoHostAvailableException e1){
                     for (int i = 0;i < RETRY_NUMBER; i++) {
-                        Thread.sleep(RETRY_INTERVAL);
-                        //call f2
                         try {
-                            voteParliamentFallback(citizen, candidate);
-                        } catch (CustomNoHostUnavailableException e2) {
-                            // przykladowo, po 2 probach
-                            if(i == 2){
-                                voteParliamentFallback(citizen, candidate, ConsistencyLevel.ONE);
-                            }
+                            Thread.sleep(RETRY_INTERVAL);
+                        } catch (InterruptedException e0) {
+                            System.out.println("[voteParliament] Sleep - Thread interupted!");
                         }
-                    }
-                    return;
-                } catch (UnavailableException e1){
-                    for (int i = 0;i < RETRY_NUMBER; i++) {
-                        Thread.sleep(RETRY_INTERVAL);
                         //call f2
                         try {
                             voteParliamentFallback(citizen, candidate);
@@ -582,7 +618,27 @@ public class BackendSession {
                         }
                     }
                     return;
-                }
+                } catch (Exception e1){ //NoHostAvailableException | TransportException
+                    for (int i = 0;i < RETRY_NUMBER; i++) {
+                        try {
+                            Thread.sleep(RETRY_INTERVAL);
+                        } catch (InterruptedException e0) {
+                                System.out.println("[voteParliament] Sleep - Thread interupted!");
+                        }
+                        //call f2
+                        try {
+                            voteParliamentFallback(citizen, candidate);
+                        } catch (CustomNoHostUnavailableException e2) {
+                            // przykladowo, po 2 probach
+                            if(i == RETRY_NUMBER - 1){
+                                System.out.println("[voteParliament] Thread interupted!");
+                                // Thread.currentThread().interrupt();
+                                Thread.currentThread().run();
+                            }
+                        }
+                    }
+                    return;
+                } 
             }
         }
     }
@@ -603,9 +659,9 @@ public class BackendSession {
         try {
             session.execute(updateCitizenVote);
             session.execute(updateParliamentCandidate);
-        }catch (UnavailableException e){
+        }catch (UnavailableException | NoHostAvailableException e){
             throw new CustomUnavailableException("[voteParliamentFallback] Could not perform a query. " + e);
-        } catch (NoHostAvailableException e) {
+        } catch (Exception e) { //NoHostAvailableException | TransportException
             throw new CustomNoHostUnavailableException("[voteParliamentFallback] Could not perform a query. " + e);
         }
         return;
@@ -665,23 +721,13 @@ public class BackendSession {
                 try {
                     session.execute(updateCitizenVote);
                     session.execute(updateSenateCandidate);
-                } catch (NoHostAvailableException e1){
+                } catch (UnavailableException | NoHostAvailableException e1){
                     for (int i = 0;i < RETRY_NUMBER; i++) {
-                        Thread.sleep(RETRY_INTERVAL);
-                        //call f2
                         try {
-                            voteSenateFallback(citizen, candidate);
-                        } catch (CustomNoHostUnavailableException e2) {
-                            // przykladowo, po 2 probach
-                            if(i == 2){
-                                voteSenateFallback(citizen, candidate, ConsistencyLevel.ONE);
-                            }
+                            Thread.sleep(RETRY_INTERVAL);
+                        } catch (InterruptedException e0) {
+                            System.out.println("[voteSenate] Sleep - Thread interupted!");
                         }
-                    }
-                    return;
-                } catch (UnavailableException e1){
-                    for (int i = 0;i < RETRY_NUMBER; i++) {
-                        Thread.sleep(RETRY_INTERVAL);
                         //call f2
                         try {
                             voteSenateFallback(citizen, candidate);
@@ -693,7 +739,26 @@ public class BackendSession {
                         }
                     }
                     return;
-                }
+                } catch (Exception e1){ //NoHostAvailableException| TransportException
+                    for (int i = 0;i < RETRY_NUMBER; i++) {
+                        try {
+                            Thread.sleep(RETRY_INTERVAL);
+                        } catch (InterruptedException e0) {
+                            System.out.println("[voteSenate] Sleep - Thread interupted!");
+                        }
+                        //call f2
+                        try {
+                            voteSenateFallback(citizen, candidate);
+                        } catch (CustomNoHostUnavailableException e2) {
+                            // przykladowo, po 2 probach
+                            if(i == RETRY_NUMBER - 1){
+                                // Thread.currentThread().interrupt();
+                                Thread.currentThread().run();
+                            }
+                        }
+                    }
+                    return;
+                } 
             }
         }
         
@@ -716,9 +781,9 @@ public class BackendSession {
         try {
             session.execute(updateCitizenVote);     // TODO
             session.execute(updateSenateCandidate); // TODO
-        }catch (UnavailableException e){
+        }catch (UnavailableException | NoHostAvailableException  e){
             throw new CustomUnavailableException("[voteSenateFallback] Could not perform a query. " + e);
-        } catch (NoHostAvailableException e) {
+        } catch (Exception e) {
             throw new CustomNoHostUnavailableException("[voteSenateFallback] Could not perform a query. " + e);
         }
         return;
@@ -729,26 +794,29 @@ public class BackendSession {
 
         Citizen citizen = getRandomCitizen();
 
-        if (!citizen.getVoiceToParliament()) {
-            voteParliament(citizen);
-        }
+        if (citizen != null) {
+            if (!citizen.getVoiceToParliament()) {
+                voteParliament(citizen);
+            }
 
-        if (!citizen.getVoiceToSenate()) {
-            voteSenate(citizen);
-        }
+            if (!citizen.getVoiceToSenate()) {
+                voteSenate(citizen);
+            }
 
-        Citizen actualCitizen = getCitizen(citizen.getAreaId(), citizen.getCitizenId());
+            Citizen actualCitizen = getCitizen(citizen.getAreaId(), citizen.getCitizenId());
 
-        if (actualCitizen.getVoiceToParliament() && actualCitizen.getVoiceToSenate()) {
-            try {
-                deleteCitizen(actualCitizen.getAreaId(), actualCitizen.getCitizenId());
+            if (actualCitizen != null && actualCitizen.getVoiceToParliament() && actualCitizen.getVoiceToSenate()) {
+                try {
+                    deleteCitizen(actualCitizen.getAreaId(), actualCitizen.getCitizenId());
                 // System.out.println("--------------------------voting--------------------------");
                 // System.out.println("Deleted citizen.");
                 // System.out.println("AreaID: " + actualCitizen.getAreaId());
                 // System.out.println("CitizenID: " + actualCitizen.getCitizenId());
                 // System.out.println("----------------------------------------------------------");
-            } catch (Exception e) {
-                throw new BackendException("[voteSenate] Could not posible to delete citizen. " + e.getMessage() + ".", e);
+                } catch (Exception e) {
+                    throw new BackendException("[voteSenate] Could not posible to delete citizen. " + e.getMessage() + ".", e);
+                }
+            
             }
         }
     }
@@ -843,8 +911,10 @@ public class BackendSession {
         Result newestResult = resultList.isEmpty() ? null : resultList.get(0);
 
         if (newestResult != null) {
-            System.out.println("Frekwencja na: " + newestResult.getVoteTimeStamp() +
-                    " wynosi: " + Math.round(((float) newestResult.getFrequency() / GeneralNumbers.ALL_CITIZENS) * 100) + "%");
+            // System.out.println("Frekwencja na: " + newestResult.getVoteTimeStamp() +
+            //         " wynosi: " + Math.round(((float) newestResult.getFrequency() / GeneralNumbers.ALL_CITIZENS) * 100) + "%");
+                    System.out.println("Frekwencja na: " + newestResult.getVoteTimeStamp() +
+                    " wynosi: " + ((float) newestResult.getFrequency() / GeneralNumbers.ALL_CITIZENS) * 100 + "%");
         } else {
             System.out.println("Brak danych.");
         }

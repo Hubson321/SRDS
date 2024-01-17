@@ -14,12 +14,15 @@ public class AreaThread implements Runnable {
     }
 
     public void run() {
+        System.out.println("[AreaThread] Starting thread run()" + t.getName());
         while (LocalDateTime.now().isBefore(maxDateTime)) {
             try {
                 backendSession.voting();
             } catch (BackendException e) {
                 e.printStackTrace();
             } catch (InterruptedException e) {
+                System.out.println("[NoHostAvailable] - starting new voting");
+                run();
                 // TODO Auto-generated catch block
                 e.printStackTrace();
             } catch (CustomUnavailableException e) {
@@ -30,11 +33,11 @@ public class AreaThread implements Runnable {
                 e.printStackTrace();
             }
 
-            try {
-                Thread.sleep(500); // 500 milisekund oczekiwania
-            } catch (InterruptedException e) {
-                System.out.println(Thread.currentThread().getName() + " interrupted");
-            }
+            // try {
+            //     Thread.sleep(500); // 500 milisekund oczekiwania
+            // } catch (InterruptedException e) {
+            //     System.out.println(Thread.currentThread().getName() + " interrupted");
+            // }
         }
     }
 }
