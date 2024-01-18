@@ -44,13 +44,14 @@ public class BackendSession {
     private List<Candidate> candidateFinalResult = new ArrayList<Candidate>();
     private static Integer RETRY_NUMBER = 3;
     private static Integer RETRY_INTERVAL = 5000;
+    private CustomRetryPolicy rc = new CustomRetryPolicy();
     public BackendSession(String[] contactPoints, String keyspace) throws BackendException {
 
-        CustomRetryPolicy rc = new CustomRetryPolicy();
+        //CustomRetryPolicy rc = new CustomRetryPolicy();
         
         Cluster cluster = Cluster.builder()
             .addContactPoints(contactPoints)
-            .withRetryPolicy(rc)
+            .withRetryPolicy(this.rc)
             .withQueryOptions(new QueryOptions()
             .setConsistencyLevel(ConsistencyLevel.QUORUM))
             .build();
@@ -85,6 +86,10 @@ public class BackendSession {
 
     // private static final SimpleDateFormat df = new
     // SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+    public void printErrors() {
+        this.rc.printErrors();
+    }
 
     public enum VotingType {
         PARLIAMENT,
@@ -299,6 +304,7 @@ public class BackendSession {
             }
             return null;
         } catch (Exception e1){ //NoHostAvailableException | TransportException
+
             for (int i = 0;i < RETRY_NUMBER; i++) {
                 try {
                     Thread.sleep(RETRY_INTERVAL);
@@ -928,6 +934,8 @@ public class BackendSession {
             logger.error("Could not close existing cluster", e);
         }
     }
+
+
 
     static class Result {
         private final Instant voteTimeStamp;
