@@ -5,15 +5,20 @@ import cassdemo.ObjectsModel.Citizen;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import com.codahale.metrics.CsvReporter;
+import com.codahale.metrics.MetricRegistry;
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.Metrics;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.QueryOptions;
 import com.datastax.driver.core.ResultSet;
@@ -45,6 +50,7 @@ public class BackendSession {
     private static Integer RETRY_NUMBER = 3;
     private static Integer RETRY_INTERVAL = 5000;
     private CustomRetryPolicy rc = new CustomRetryPolicy();
+    private MetricRegistry myRegistry = new MetricRegistry();
     public BackendSession(String[] contactPoints, String keyspace) throws BackendException {
 
         //CustomRetryPolicy rc = new CustomRetryPolicy();
@@ -61,6 +67,16 @@ public class BackendSession {
             throw new BackendException("Could not connect to the cluster. " + e.getMessage() + ".", e);
         }
         prepareStatements();
+        
+        myRegistry.registerAll(cluster.getMetrics().getRegistry());
+        Metrics metrics = cluster.getMetrics();
+
+        CsvReporter csvReporter = CsvReporter.forRegistry(metrics.getRegistry())
+                .convertDurationsTo(TimeUnit.MILLISECONDS)
+                .convertRatesTo(TimeUnit.SECONDS)
+                .build(new File("."));
+                
+        csvReporter.start(30, TimeUnit.SECONDS);
     }
 
     private static PreparedStatement GET_FINAL_RESULT_PARLIAMENT;

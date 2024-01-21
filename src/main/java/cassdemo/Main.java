@@ -4,8 +4,6 @@ import java.io.IOException;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Properties;
 
 import cassdemo.backend.BackendException;
@@ -27,27 +25,23 @@ public class Main {
         } catch (IOException ex) {
             ex.printStackTrace();
         }
-        // robimy liczniki w customretry
-        // dodać metodę do printowania w customretrypolicy
-        // funckje do printowania wywołamy w main
 
         // -----------------------------------------------------------------------------
 		// przed prawidłowym skryptem na początku uruchomić tylko meotdy z setupSession,
         // potem zakomentowac
-        // SetupSession setupSession = new SetupSession(contactPoint, keyspace);
-        // setupSession.prepareStatements();
-        // setupSession.setupCandidatesAndCitizens();
+        SetupSession setupSession = new SetupSession(contactPoint, keyspace);
+        setupSession.prepareStatements();
+        setupSession.setupCandidatesAndCitizens();
         // -----------------------------------------------------------------------------
 
         String[] contactPoints = {"172.18.0.1","172.18.0.2","172.18.0.3"};
         BackendSession session = new BackendSession(contactPoints, keyspace);
-       
         
-		int numAreas = 10;
+		int numAreas = 4;
 		AreaThread[] areas = new AreaThread[numAreas];
 		DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
 
-        LocalDateTime maxDateTime = LocalDateTime.parse("18-01-2024 21:57:00", inputFormatter); // do manipulacji daty konca glosowania (dzien-miesiac-rok godzina-minuta-sekunda)
+        LocalDateTime maxDateTime = LocalDateTime.parse("xx-xx-xxxx xx:xx:xx", inputFormatter); // do manipulacji daty konca glosowania (dzien-miesiac-rok godzina-minuta-sekunda)
         System.out.println("----------------------------------------------------------");
         System.out.println("Poczatek glosowania");
         System.out.println("----------------------------------------------------------");
@@ -68,7 +62,7 @@ public class Main {
         System.out.println("----------------------------------------------------------");
 		System.out.println("Koniec glosowania");
         System.out.println("----------------------------------------------------------");
-        // session.displayFinalResults();
+        session.displayFinalResults();
         session.displayFrequency();
         session.printErrors();
         System.exit(0);
