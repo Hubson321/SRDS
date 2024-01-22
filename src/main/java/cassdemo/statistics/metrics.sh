@@ -64,7 +64,4 @@ while true; do
     PREVIOUS_READ_COUNT=$READ_COUNT
     PREVIOUS_WRITE_COUNT=$WRITE_COUNT
     PREVIOUS_TIMESTAMP=$CURRENT_TIMESTAMP
-
-    # Sleep for 10 seconds before the next iteration
-    sleep 10
 done

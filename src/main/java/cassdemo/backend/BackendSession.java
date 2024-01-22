@@ -70,7 +70,7 @@ public class BackendSession {
         
         myRegistry.registerAll(cluster.getMetrics().getRegistry());
         Metrics metrics = cluster.getMetrics();
-
+        
         CsvReporter csvReporter = CsvReporter.forRegistry(metrics.getRegistry())
                 .convertDurationsTo(TimeUnit.MILLISECONDS)
                 .convertRatesTo(TimeUnit.SECONDS)

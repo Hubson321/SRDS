@@ -23,7 +23,21 @@ jar {
     }
     duplicatesStrategy = 'exclude'
     destinationDirectory.set(file("$buildDir/project-build"))
+    archiveFileName = 'Main.jar'
 }
+
+// jar {
+//     from {
+//         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+//     }
+//     manifest {
+//         attributes 'Main-Class' : 'cassdemo.MetricsCSVReader'
+//     }
+//     duplicatesStrategy = 'exclude'
+//     destinationDirectory.set(file("$buildDir/project-build"))
+//     archiveFileName = 'MetricsCSVReader.jar'
+// }
+// task createAllJars(dependsOn: [createJar1, createJar2]) {}
 
 repositories {
 	maven { url "https://repo.springsource.org/libs-milestone" }
@@ -33,13 +47,14 @@ repositories {
 }
 
 dependencies {
-  implementation group: 'org.slf4j', name: 'slf4j-api', version: '2.0.+'
-  implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.+'
+    implementation group: 'org.slf4j', name: 'slf4j-api', version: '2.0.+'
+    implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.+'
+    implementation group: 'com.opencsv', name: 'opencsv', version: '5.7.1'
 
-  implementation 'com.datastax.cassandra:cassandra-driver-core:3.3.0'
+    implementation 'com.datastax.cassandra:cassandra-driver-core:3.3.0'
   //implementation 'com.datastax.oss:java-driver-core:4.0.1'
   //implementation 'com.datastax.oss:java-driver-query-builder:4.0.1'
-  implementation 'org.apache.cassandra:cassandra-all:3.11.0'
+    implementation 'org.apache.cassandra:cassandra-all:3.11.0'
     implementation 'org.projectlombok:lombok:1.18.20'
     //implementation 'org.apache.cassandra:cassandra-all:4.0.3'
 
