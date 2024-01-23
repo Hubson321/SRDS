@@ -26,17 +26,24 @@ public class SetupSession {
     private static PreparedStatement INSERT_CANDIDATE_SENATE;
     private Session session;
     private Integer ALL_CITIZENS = 100000; // Initial number of citizens
-    private Integer CITIZENS_IN_AREA = 2000; // Initial ALL_CITIZENS / CITIZENS_IN_AREA => 50 voting_areas
+    private Integer CITIZENS_IN_AREA = 2000; // Initial ALL_CITIZENS / CITIZENS_IN_AREA => 50 voting_areas 
 
     public SetupSession(String contactPoint, String keyspace) throws BackendException {
+
+        //TODO
+        //TODO: Sprawdzic zachowanie przy trybach: ONE, QUORUM -> OBOWIAZUJE NA ODCZYTY I ZAPISY JEDNOCZESNIE!
+        //TODO: Default to: LOCAL_ONE - odwolanie do jednego wezla (w lokalnej partycji)
+        //TODO
+        
         // Cluster cluster = Cluster.builder().addContactPoint(contactPoint).build(); // default Consistency - LOCAL_ONE
         Cluster cluster = Cluster.builder()
             .addContactPoint(contactPoint)
             .withQueryOptions(new QueryOptions()
             .setConsistencyLevel(ConsistencyLevel.QUORUM))
             .build();
-        
-        try {
+        //TODO
+
+        try {   
             session = cluster.connect(keyspace);
         } catch (Exception e) {
             throw new BackendException("Could not connect to the cluster. " + e.getMessage() + ".", e);
@@ -69,7 +76,7 @@ public class SetupSession {
 
     private void prepareCitizenSetup() {
         Integer areaNum = 1;
-        for (int i = 1; i <= GeneralNumbers.ALL_CITIZENS; i++) {
+        for (int i = 1; i <= ALL_CITIZENS; i++) {
             UUID userId = UUID.randomUUID();
             try {
                 insertCitizen(userId, areaNum);
@@ -80,12 +87,10 @@ public class SetupSession {
             // jeden z 50 okregów wyborczych
             // 28 mln / 50 = 560000 - tylu obywateli per okręg, tymczasowo mln glosujących
             // ALL_CITIZENS / 50 = CITIZENS_IN_AREA
-            if( i % GeneralNumbers.CITIZENS_IN_AREA == 0){
+            if( i % CITIZENS_IN_AREA == 0){
                 areaNum += 1;
             }
         }
-        logger.info("Citizens prepared");
-
     }
 
     private void prepareCandidateSetup() {
@@ -107,8 +112,6 @@ public class SetupSession {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        logger.info("Candidates prepared");
     }
 
     private void prepareCandidatesList(List<Candidate> candidates, Boolean ifParliament) {
